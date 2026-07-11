@@ -173,6 +173,15 @@ public class MainActivity extends AppCompatActivity {
                 handleUrl(url);
                 return true;
             }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                // 내서재(wvBook) 페이지 로딩 완료 시 localStorage 데이터 수집
+                if (view == wvBook) {
+                    DataCollector.collect(view);
+                }
+            }
         });
         // 얼럿창 처리
         wv.setWebChromeClient(new WebChromeClient() {
