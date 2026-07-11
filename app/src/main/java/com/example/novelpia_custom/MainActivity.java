@@ -177,10 +177,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                // 내서재(wvBook) 페이지 로딩 완료 시 localStorage 데이터 수집
-                if (view == wvBook) {
-                    DataCollector.collect(view);
-                }
+                // 모든 WebView에서 localStorage 데이터 수집
+                DataCollector.collect(view);
             }
         });
         // 얼럿창 처리
