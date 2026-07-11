@@ -16,10 +16,28 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            val keystoreB64 = System.getenv("KEYSTORE_BASE64") ?: ""
+            if (keystoreB64.isNotEmpty()) {
+                val keystoreFile = file("release.keystore")
+                keystoreFile.writeBytes(java.util.Base64.getDecoder().decode(keystoreB64))
+                storeFile = keystoreFile
+                storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "android"
+                keyAlias = System.getenv("KEY_ALIAS") ?: "novelpia_custom"
+                keyPassword = System.getenv("KEY_PASSWORD") ?: "android"
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+        debug {
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
