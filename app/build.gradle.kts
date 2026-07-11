@@ -10,18 +10,16 @@ android {
         applicationId = "com.example.novelpia_custom"
         minSdk = 24
         targetSdk = 34
-        versionCode = 8
-        versionName = "1.3.1"
+        versionCode = 9
+        versionName = "1.3.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
         create("release") {
-            val keystoreB64 = System.getenv("KEYSTORE_BASE64") ?: ""
-            if (keystoreB64.isNotEmpty()) {
-                val keystoreFile = file("release.keystore")
-                keystoreFile.writeBytes(java.util.Base64.getDecoder().decode(keystoreB64))
+            val keystoreFile = file("release.keystore")
+            if (keystoreFile.exists()) {
                 storeFile = keystoreFile
                 storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "android"
                 keyAlias = System.getenv("KEY_ALIAS") ?: "novelpia_custom"
