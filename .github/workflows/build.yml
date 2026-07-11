@@ -40,4 +40,4 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: app/build/outputs/apk/debug/app-debug.apk
-          generate_release_notes: true
+          token: ${{ secrets.GITHUB_TOKEN }}
