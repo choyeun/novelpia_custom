@@ -32,7 +32,7 @@ jobs:
 
       - name: Decode Keystore
         run: |
-          base64 --decode <<< "${{ secrets.KEYSTORE_BASE64 }}" > release.keystore
+          base64 --decode <<< "${{ secrets.KEYSTORE_BASE64 }}" > app/release.keystore
 
       - name: Build APK
         env:
