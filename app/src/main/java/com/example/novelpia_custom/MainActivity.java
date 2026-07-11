@@ -131,9 +131,9 @@ public class MainActivity extends AppCompatActivity {
         }
         if(!restored) {
             wvMain.loadUrl(START_URL);
-            wvBook.loadUrl(START_URL + BOOK_SUF);
+            wvBook.loadUrl(START_URL + "mybook/last_view");
             wvSearch.loadUrl(START_URL + SEARCH_SUF);
-            swapView(BOOK_INDEX, false); // NOTE: 앱 시작 시 자동으로 내서재 열람하는 코드.
+            swapView(BOOK_INDEX, false); // NOTE: 앱 시작 시 자동으로 최근기록 열람
         }
     }
     // 웹뷰 초기화
