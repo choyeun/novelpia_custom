@@ -30,6 +30,13 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Update version from tag
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          sed -i "s/versionName = \".*\"/versionName = \"$VERSION\"/" app/build.gradle.kts
+          echo "Version set to $VERSION"
+
       - name: Decode Keystore
         run: |
           base64 --decode <<< "${{ secrets.KEYSTORE_BASE64 }}" > app/release.keystore
