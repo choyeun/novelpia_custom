@@ -149,6 +149,8 @@ public class MainActivity extends AppCompatActivity {
             wvUserAgent = s.getUserAgentString().replace("; wv", "");
         }
         s.setUserAgentString(wvUserAgent);
+        // NativeBridge 등록 (오프라인 큐 + 작품 정보 수집)
+        wv.addJavascriptInterface(new NativeBridge(this), "Android");
         // 링크 이동 블락
         wv.setWebViewClient(new WebViewClient() {
             @Override
