@@ -11,6 +11,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -135,7 +136,65 @@ public class MainActivity extends AppCompatActivity {
             wvSearch.loadUrl(START_URL + SEARCH_SUF);
             swapView(BOOK_INDEX, false); // NOTE: 앱 시작 시 자동으로 최근기록 열람
         }
+
+        // 백그라운드에서 업데이트 확인
+        checkForUpdate();
     }
+
+    // ─── 자동 업데이트 ────────────────────────────────────
+    /** 백그라운드 스레드에서 GitHub 최신 버전 확인 */
+    private void checkForUpdate() {
+        new Thread(() -> {
+            final UpdateChecker.UpdateInfo info = UpdateChecker.check(BuildConfig.VERSION_NAME);
+            if (info.hasUpdate) {
+                runOnUiThread(() -> showUpdateDialog(info));
+            }
+        }).start();
+    }
+
+    /** 업데이트 다이얼로그 표시 */
+    private void showUpdateDialog(final UpdateChecker.UpdateInfo info) {
+        new AlertDialog.Builder(this)
+                .setTitle("📲 업데이트 가능")
+                .setMessage(String.format(
+                        "새 버전 %s이(가) 있습니다.\n\n현재 버전: %s\nAPK 크기: %s",
+                        info.latestVersion,
+                        BuildConfig.VERSION_NAME,
+                        info.apkSize > 0 ? String.format("%.1fMB", info.apkSize / 1024f / 1024f) : "?"
+                ))
+                .setPositiveButton("지금 업데이트", (DialogInterface dialog, int which) -> {
+                    downloadAndInstall(info);
+                })
+                .setNegativeButton("나중에", null)
+                .show();
+    }
+
+    /** APK 다운로드 + 설치 (백그라운드 스레드) */
+    private void downloadAndInstall(final UpdateChecker.UpdateInfo info) {
+        // 다운로드 시작 토스트
+        runOnUiThread(() ->
+                Toast.makeText(this, "다운로드 시작...", Toast.LENGTH_SHORT).show()
+        );
+
+        new Thread(() -> {
+            UpdateInstaller.downloadAndInstall(info.downloadUrl, getApplicationContext(),
+                    new UpdateInstaller.DownloadCallback() {
+                        @Override
+                        public void onProgress(int percent) {
+                            // 진행률 (필요시 Notification으로 확장 가능)
+                        }
+
+                        @Override
+                        public void onComplete(boolean success, String message) {
+                            runOnUiThread(() -> {
+                                String msg = success ? "설치를 시작합니다." : "업데이트 실패: " + message;
+                                Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
+                            });
+                        }
+                    });
+        }).start();
+    }
+
     // 웹뷰 초기화
     @SuppressLint("SetJavaScriptEnabled")
     private void setupWebView(WebView wv) {
