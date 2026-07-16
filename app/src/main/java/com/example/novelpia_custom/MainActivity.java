@@ -84,6 +84,9 @@ public class MainActivity extends AppCompatActivity {
 
         diskCache = new DiskCache(getCacheDir());
 
+        // TODO: v1.4.1에서 제거 (Content-Encoding 버그 fix용 1회성 clear)
+        diskCache.clear();
+
         setContentView(R.layout.activity_main);
 
         wvMain = findViewById(R.id.wvMain);
@@ -255,7 +258,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.d("WebViewCache", "✅ 캐시 hit: " + CachingWebViewClient.truncateUrl(reqUrl, 60));
                     return new WebResourceResponse(
                             cached.contentType,
-                            cached.encoding,
+                            "",  // HttpURLConnection이 이미 압축 해제
                             new java.io.ByteArrayInputStream(cached.data)
                     );
                 }
@@ -277,13 +280,12 @@ public class MainActivity extends AppCompatActivity {
 
                     String contentType = conn.getContentType();
                     if (contentType == null) contentType = CachingWebViewClient.mimeFromExtension(ext);
-                    String encoding = conn.getContentEncoding();
 
                     byte[] data = CachingWebViewClient.readAllBytes(conn.getInputStream());
                     conn.disconnect();
 
-                    diskCache.put(reqUrl, data, contentType, encoding);
-                    return new WebResourceResponse(contentType, encoding, new java.io.ByteArrayInputStream(data));
+                    diskCache.put(reqUrl, data, contentType, "");
+                    return new WebResourceResponse(contentType, "", new java.io.ByteArrayInputStream(data));
 
                 } catch (Exception e) {
                     Log.w("WebViewCache", "캐시 miss 처리 실패: " + e.getMessage());
