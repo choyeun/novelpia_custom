@@ -143,16 +143,15 @@ public class MainActivity extends AppCompatActivity {
                         if (!(bottomNav.getChildAt(0) instanceof android.view.ViewGroup)) return;
                         android.view.ViewGroup vg = (android.view.ViewGroup) bottomNav.getChildAt(0);
                         for (int i = 0; i < vg.getChildCount(); i++) {
-                                View child = vg.getChildAt(i);
-                                if (child != null && child.getId() == R.id.nav_book) {
-                                    child.setOnLongClickListener(v -> {
-                                        isBookLongPress = true;
-                                        openBook(START_URL + "mybook/like");
-                                        handleToast("선호작");
-                                        return true;
-                                    });
-                                    break;
-                                }
+                            View child = vg.getChildAt(i);
+                            if (child != null && child.getId() == R.id.nav_book) {
+                                child.setOnLongClickListener(v -> {
+                                    isBookLongPress = true;
+                                    openBook(START_URL + "mybook/like");
+                                    handleToast("선호작");
+                                    return true;
+                                });
+                                break;
                             }
                         }
                     } catch (Exception ignored) {}
