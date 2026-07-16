@@ -23,6 +23,7 @@ import android.webkit.CookieManager;
 import android.webkit.JsResult;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -41,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private WebView wvBook;
     private WebView wvNovel;
     private String wvUserAgent = null;
+    private DiskCache diskCache;
     private ImageButton btnGo;
     // 페이지 이동용
     private final Deque<Byte> backoffstack = new ArrayDeque<>();
@@ -79,6 +81,8 @@ public class MainActivity extends AppCompatActivity {
 
         CookieManager cm = CookieManager.getInstance();
         cm.setAcceptCookie(true);
+
+        diskCache = new DiskCache(getCacheDir());
 
         setContentView(R.layout.activity_main);
 
@@ -233,6 +237,58 @@ public class MainActivity extends AppCompatActivity {
 
                 handleUrl(url);
                 return true;
+            }
+
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                String reqUrl = request.getUrl().toString();
+                String ext = CachingWebViewClient.getExtension(reqUrl).toLowerCase();
+
+                // 이미지/폰트만 캐싱
+                if (!CachingWebViewClient.isCacheableExtension(ext)) {
+                    return null;
+                }
+
+                // 캐시 hit
+                DiskCache.CacheEntry cached = diskCache.get(reqUrl);
+                if (cached != null) {
+                    Log.d(TAG, "✅ 캐시 hit: " + truncateUrl(reqUrl, 60));
+                    return new WebResourceResponse(
+                            cached.contentType,
+                            cached.encoding,
+                            new java.io.ByteArrayInputStream(cached.data)
+                    );
+                }
+
+                // 캐시 miss → 직접 받아서 저장
+                Log.d(TAG, "⬇ 캐시 miss: " + truncateUrl(reqUrl, 60));
+                try {
+                    java.net.HttpURLConnection conn =
+                            (java.net.HttpURLConnection) new java.net.URL(reqUrl).openConnection();
+                    conn.setRequestMethod("GET");
+                    conn.setConnectTimeout(8000);
+                    conn.setReadTimeout(15000);
+                    conn.setInstanceFollowRedirects(true);
+
+                    if (conn.getResponseCode() != 200) {
+                        conn.disconnect();
+                        return null;
+                    }
+
+                    String contentType = conn.getContentType();
+                    if (contentType == null) contentType = CachingWebViewClient.mimeFromExtension(ext);
+                    String encoding = conn.getContentEncoding();
+
+                    byte[] data = readAllBytes(conn.getInputStream());
+                    conn.disconnect();
+
+                    diskCache.put(reqUrl, data, contentType, encoding);
+                    return new WebResourceResponse(contentType, encoding, new java.io.ByteArrayInputStream(data));
+
+                } catch (Exception e) {
+                    Log.w(TAG, "캐시 miss 처리 실패: " + e.getMessage());
+                    return null;
+                }
             }
 
             @Override
