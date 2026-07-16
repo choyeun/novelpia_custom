@@ -202,7 +202,8 @@ public class DiskCache {
 
     private List<String> keySet() {
         List<String> keys = new ArrayList<>();
-        for (String k : index.keys()) keys.add(k);
+        java.util.Iterator<String> iter = index.keys();
+        while (iter.hasNext()) keys.add(iter.next());
         return keys;
     }
 
