@@ -1,65 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/container"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#0D0D0D">
 
-    <!-- 메인 창 WebView -->
-    <WebView
-        android:id="@+id/wvMain"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:overScrollMode="never"
-        android:scrollbars="none" />
+        android:orientation="vertical">
 
-    <!-- 내서재 WebView -->
-    <WebView
-        android:id="@+id/wvBook"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="invisible"
-        android:overScrollMode="never"
-        android:scrollbars="none" />
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipeRefresh"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
 
-    <!-- 소설 읽기용 WebView -->
-    <WebView
-        android:id="@+id/wvReader"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="invisible"
-        android:overScrollMode="never"
-        android:scrollbars="none" />
+            <FrameLayout
+                android:id="@+id/webviewContainer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
 
-    <!-- 검색용 WebView -->
-    <WebView
-        android:id="@+id/wvSearch"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="invisible"
-        android:overScrollMode="never"
-        android:scrollbars="none" />
+                <WebView
+                    android:id="@+id/wvMain"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:overScrollMode="never"
+                    android:scrollbars="none" />
 
-    <!-- 소설표지용 WebView -->
-    <WebView
-        android:id="@+id/wvNovel"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="invisible"
-        android:overScrollMode="never"
-        android:scrollbars="none" />
-    <!-- 상단 가운데 검색(주소 입력) 버튼 -->
-    <ImageButton
-        android:id="@+id/btnGo"
-        android:layout_width="52dp"
-        android:layout_height="52dp"
-        android:layout_gravity="top|center_horizontal"
-        android:layout_marginTop="0dp"
-        android:layout_marginLeft="10dp"
-        android:background="@android:color/transparent"
-        android:contentDescription="주소 입력"
-        android:src="@android:drawable/ic_menu_search"
-        android:scaleType="centerInside"
-        android:padding="0dp"
-        android:clickable="true"
-        android:focusable="true"/>
+                <WebView
+                    android:id="@+id/wvBook"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="invisible"
+                    android:overScrollMode="never"
+                    android:scrollbars="none" />
+
+                <WebView
+                    android:id="@+id/wvReader"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="invisible"
+                    android:overScrollMode="never"
+                    android:scrollbars="none" />
+
+                <WebView
+                    android:id="@+id/wvSearch"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="invisible"
+                    android:overScrollMode="never"
+                    android:scrollbars="none" />
+
+                <WebView
+                    android:id="@+id/wvNovel"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="invisible"
+                    android:overScrollMode="never"
+                    android:scrollbars="none" />
+
+                <ImageButton
+                    android:id="@+id/btnGo"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="top|end"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/btn_go_bg"
+                    android:clickable="true"
+                    android:contentDescription="주소 입력"
+                    android:focusable="true"
+                    android:padding="10dp"
+                    android:scaleType="centerInside"
+                    android:src="@android:drawable/ic_menu_search" />
+            </FrameLayout>
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottomNav"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#1A1A1A"
+            app:itemIconTint="@color/nav_icon_color"
+            app:itemTextColor="@color/nav_icon_color"
+            app:menu="@menu/bottom_nav_menu" />
+
+    </LinearLayout>
 </FrameLayout>

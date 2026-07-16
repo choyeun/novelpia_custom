@@ -31,6 +31,11 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -44,6 +49,8 @@ public class MainActivity extends AppCompatActivity {
     private String wvUserAgent = null;
     private DiskCache diskCache;
     private ImageButton btnGo;
+    private SwipeRefreshLayout swipeRefresh;
+    private BottomNavigationView bottomNav;
     // 페이지 이동용
     private final Deque<Byte> backoffstack = new ArrayDeque<>();
     private static final byte MAIN_INDEX = 0b0001;
@@ -92,6 +99,8 @@ public class MainActivity extends AppCompatActivity {
         wvBook = findViewById(R.id.wvBook);
         wvNovel = findViewById(R.id.wvNovel);
         btnGo = findViewById(R.id.btnGo);
+        swipeRefresh = findViewById(R.id.swipeRefresh);
+        bottomNav = findViewById(R.id.bottomNav);
 
         setupWebView(wvMain);
         setupWebView(wvViewer);
@@ -105,13 +114,37 @@ public class MainActivity extends AppCompatActivity {
         s.setSupportMultipleWindows(true);
 
         // 뒤로가기 콜백 등록
-        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                handleBackPressed();
-            }
-        });
-        // 현재 링크 복사 기능
+                getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+                    @Override
+                    public void handleOnBackPressed() {
+                        handleBackPressed();
+                    }
+                });
+
+                // 하단 내비게이션
+                bottomNav.setOnItemSelectedListener(item -> {
+                    int id = item.getItemId();
+                    if (id == R.id.nav_main) {
+                        openMain(START_URL);
+                    } else if (id == R.id.nav_search) {
+                        openSearch(START_URL + SEARCH_SUF);
+                    } else if (id == R.id.nav_book) {
+                        openBook(START_URL + BOOK_SUF);
+                    } else if (id == R.id.nav_info) {
+                        showAboutDialog();
+                    }
+                    return true;
+                });
+
+                // 스와이프 새로고침
+                swipeRefresh.setColorSchemeResources(android.R.color.holo_green_dark);
+                swipeRefresh.setOnRefreshListener(() -> {
+                    WebView wv = classify(current);
+                    if (wv != null) wv.reload();
+                    swipeRefresh.postDelayed(() -> swipeRefresh.setRefreshing(false), 3000);
+                });
+
+                // 현재 링크 복사 기능
         WebView[] webViews = {wvViewer, wvNovel};
         for(WebView wv : webViews) {
             wv.setOnLongClickListener(w -> {
@@ -158,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
 
     /** 업데이트 다이얼로그 표시 */
     private void showUpdateDialog(final UpdateChecker.UpdateInfo info) {
-        new AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle("📲 업데이트 가능")
                 .setMessage(String.format(
                         "새 버전 %s이(가) 있습니다.\n\n현재 버전: %s\nAPK 크기: %s",
@@ -170,6 +203,24 @@ public class MainActivity extends AppCompatActivity {
                     downloadAndInstall(info);
                 })
                 .setNegativeButton("나중에", null)
+                .show();
+    }
+
+    private void showAboutDialog() {
+        String msg = "📚 노벨피아 커스텀\n\n"
+                + "버전: " + BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")\n"
+                + "\n"
+                + "GitHub: github.com/choyeun/novelpia_custom\n"
+                + "\n"
+                + "기능:\n"
+                + "• 읽은 기록 자동 수집\n"
+                + "• 자동 업데이트\n"
+                + "• 이미지 캐싱 (데이터 절약)\n"
+                + "• 볼륨키 페이지 이동";
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("ℹ️ 정보")
+                .setMessage(msg)
+                .setPositiveButton("닫기", null)
                 .show();
     }
 
