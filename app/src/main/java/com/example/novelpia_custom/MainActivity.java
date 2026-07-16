@@ -252,7 +252,7 @@ public class MainActivity extends AppCompatActivity {
                 // 캐시 hit
                 DiskCache.CacheEntry cached = diskCache.get(reqUrl);
                 if (cached != null) {
-                    Log.d(TAG, "✅ 캐시 hit: " + truncateUrl(reqUrl, 60));
+                    Log.d("WebViewCache", "✅ 캐시 hit: " + CachingWebViewClient.truncateUrl(reqUrl, 60));
                     return new WebResourceResponse(
                             cached.contentType,
                             cached.encoding,
@@ -261,7 +261,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 // 캐시 miss → 직접 받아서 저장
-                Log.d(TAG, "⬇ 캐시 miss: " + truncateUrl(reqUrl, 60));
+                Log.d("WebViewCache", "⬇ 캐시 miss: " + CachingWebViewClient.truncateUrl(reqUrl, 60));
                 try {
                     java.net.HttpURLConnection conn =
                             (java.net.HttpURLConnection) new java.net.URL(reqUrl).openConnection();
@@ -279,14 +279,14 @@ public class MainActivity extends AppCompatActivity {
                     if (contentType == null) contentType = CachingWebViewClient.mimeFromExtension(ext);
                     String encoding = conn.getContentEncoding();
 
-                    byte[] data = readAllBytes(conn.getInputStream());
+                    byte[] data = CachingWebViewClient.readAllBytes(conn.getInputStream());
                     conn.disconnect();
 
                     diskCache.put(reqUrl, data, contentType, encoding);
                     return new WebResourceResponse(contentType, encoding, new java.io.ByteArrayInputStream(data));
 
                 } catch (Exception e) {
-                    Log.w(TAG, "캐시 miss 처리 실패: " + e.getMessage());
+                    Log.w("WebViewCache", "캐시 miss 처리 실패: " + e.getMessage());
                     return null;
                 }
             }
