@@ -48,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
     private DiskCache diskCache;
     private ImageButton btnGo;
     private BottomNavigationView bottomNav;
+    private volatile boolean isBookLongPress = false;
     // 페이지 이동용
     private final Deque<Byte> backoffstack = new ArrayDeque<>();
     private static final byte MAIN_INDEX = 0b0001;
@@ -125,23 +126,34 @@ public class MainActivity extends AppCompatActivity {
                     } else if (id == R.id.nav_search) {
                         openSearch(START_URL + SEARCH_SUF);
                     } else if (id == R.id.nav_book) {
-                        openBook(START_URL + BOOK_SUF);
+                        if (isBookLongPress) {
+                            isBookLongPress = false;
+                        } else {
+                            openBook(START_URL + BOOK_SUF);
+                        }
                     } else if (id == R.id.nav_settings) {
                         showSettingsDialog();
                     }
                     return true;
                 });
 
-                // 서재 롱클릭 → 선호작
+                // 서재 롱클릭 → 선호작 (onTouch로 long press 감지)
                 bottomNav.post(() -> {
                     try {
-                        View navBook = bottomNav.findViewById(R.id.nav_book);
-                        if (navBook != null) {
-                            navBook.setOnLongClickListener(v -> {
-                                openBook(START_URL + "mybook/like");
-                                handleToast("선호작");
-                                return true;
-                            });
+                        if (!(bottomNav.getChildAt(0) instanceof android.view.ViewGroup)) return;
+                        android.view.ViewGroup vg = (android.view.ViewGroup) bottomNav.getChildAt(0);
+                        for (int i = 0; i < vg.getChildCount(); i++) {
+                                View child = vg.getChildAt(i);
+                                if (child != null && child.getId() == R.id.nav_book) {
+                                    child.setOnLongClickListener(v -> {
+                                        isBookLongPress = true;
+                                        openBook(START_URL + "mybook/like");
+                                        handleToast("선호작");
+                                        return true;
+                                    });
+                                    break;
+                                }
+                            }
                         }
                     } catch (Exception ignored) {}
                 });

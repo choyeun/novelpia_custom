@@ -2,6 +2,7 @@ package com.example.novelpia_custom;
 
 import android.util.Log;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -81,9 +82,23 @@ public class UpdateChecker {
             // APK 에셋 찾기
             String downloadUrl = null;
             long apkSize = 0;
-            // 간단히 tag_name으로 APK URL 구성 (GitHub Release URL 패턴)
-            downloadUrl = "https://github.com/choyeun/novelpia_custom/releases/download/"
-                    + tagName + "/novelpia-custom-" + tagName + ".apk";
+            JSONArray assets = json.optJSONArray("assets");
+            if (assets != null) {
+                for (int i = 0; i < assets.length(); i++) {
+                    JSONObject asset = assets.getJSONObject(i);
+                    String name = asset.optString("name", "");
+                    if (name.endsWith(".apk")) {
+                        downloadUrl = asset.optString("browser_download_url", null);
+                        apkSize = asset.optLong("size", 0);
+                        break;
+                    }
+                }
+            }
+            // assets 배열이 없으면 tag_name으로 URL 추정
+            if (downloadUrl == null) {
+                downloadUrl = "https://github.com/choyeun/novelpia_custom/releases/download/"
+                        + tagName + "/novelpia-custom-" + tagName + ".apk";
+            }
 
             // 버전 비교
             boolean hasUpdate = isNewer(currentVersion, latestVer);
