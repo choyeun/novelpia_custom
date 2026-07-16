@@ -102,7 +102,7 @@ public class UpdateChecker {
      * SemVer 비교 (major.minor.patch)
      * @return latest > current 이면 true
      */
-    private static boolean isNewer(String current, String latest) {
+    public static boolean isNewer(String current, String latest) {
         int[] cur = parseVersion(current);
         int[] lat = parseVersion(latest);
         if (cur.length == 0 || lat.length == 0) return false;
@@ -118,7 +118,7 @@ public class UpdateChecker {
     }
 
     /** "1.3.5" → {1, 3, 5} */
-    private static int[] parseVersion(String v) {
+    public static int[] parseVersion(String v) {
         if (v == null || v.isEmpty()) return new int[0];
         try {
             String[] parts = v.split("\\.");
