@@ -346,6 +346,14 @@ public class MainActivity extends AppCompatActivity {
                 super.onPageFinished(view, url);
                 // 모든 WebView에서 localStorage 데이터 수집
                 DataCollector.collect(view);
+                // 노벨피아 하단바 숨기기 (앱 내비와 중복)
+                view.evaluateJavascript(
+                    "(function(){" +
+                    "var e=document.querySelector('.bt-nv-wrapper');" +
+                    "if(e){e.style.display='none';}" +
+                    "var f=document.querySelector('footer');" +
+                    "if(f){f.style.display='none';}" +
+                    "})();", null);
             }
         });
         // 얼럿창 처리
