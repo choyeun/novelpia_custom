@@ -10,18 +10,13 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-            android:id="@+id/swipeRefresh"
+        <FrameLayout
+            android:id="@+id/webviewContainer"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1">
 
-            <FrameLayout
-                android:id="@+id/webviewContainer"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <WebView
+            <WebView
                     android:id="@+id/wvMain"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -61,6 +56,21 @@
                     android:scrollbars="none" />
 
                 <ImageButton
+                    android:id="@+id/btnRefresh"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_gravity="top|end"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@android:color/transparent"
+                    android:clickable="true"
+                    android:contentDescription="새로고침"
+                    android:focusable="true"
+                    android:padding="4dp"
+                    android:scaleType="centerInside"
+                    android:src="@android:drawable/ic_menu_rotate" />
+
+                <ImageButton
                     android:id="@+id/btnGo"
                     android:layout_width="52dp"
                     android:layout_height="52dp"
@@ -75,7 +85,6 @@
                     android:scaleType="centerInside"
                     android:src="@android:drawable/ic_menu_search" />
             </FrameLayout>
-        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
         <com.google.android.material.bottomnavigation.BottomNavigationView
             android:id="@+id/bottomNav"

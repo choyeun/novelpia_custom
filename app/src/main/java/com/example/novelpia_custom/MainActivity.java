@@ -31,8 +31,6 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -49,7 +47,6 @@ public class MainActivity extends AppCompatActivity {
     private String wvUserAgent = null;
     private DiskCache diskCache;
     private ImageButton btnGo;
-    private SwipeRefreshLayout swipeRefresh;
     private BottomNavigationView bottomNav;
     // 페이지 이동용
     private final Deque<Byte> backoffstack = new ArrayDeque<>();
@@ -99,7 +96,6 @@ public class MainActivity extends AppCompatActivity {
         wvBook = findViewById(R.id.wvBook);
         wvNovel = findViewById(R.id.wvNovel);
         btnGo = findViewById(R.id.btnGo);
-        swipeRefresh = findViewById(R.id.swipeRefresh);
         bottomNav = findViewById(R.id.bottomNav);
 
         setupWebView(wvMain);
@@ -130,19 +126,20 @@ public class MainActivity extends AppCompatActivity {
                         openSearch(START_URL + SEARCH_SUF);
                     } else if (id == R.id.nav_book) {
                         openBook(START_URL + BOOK_SUF);
-                    } else if (id == R.id.nav_info) {
-                        showAboutDialog();
+                    } else if (id == R.id.nav_settings) {
+                        showSettingsDialog();
                     }
                     return true;
                 });
 
-                // 스와이프 새로고침
-                swipeRefresh.setColorSchemeResources(android.R.color.holo_green_dark);
-                swipeRefresh.setOnRefreshListener(() -> {
-                    WebView wv = classify(current);
-                    if (wv != null) wv.reload();
-                    swipeRefresh.postDelayed(() -> swipeRefresh.setRefreshing(false), 3000);
-                });
+                // 새로고침 버튼
+                ImageButton btnRefresh = findViewById(R.id.btnRefresh);
+                if (btnRefresh != null) {
+                    btnRefresh.setOnClickListener(v -> {
+                        WebView wv = classify(current);
+                        if (wv != null) wv.reload();
+                    });
+                }
 
                 // 현재 링크 복사 기능
         WebView[] webViews = {wvViewer, wvNovel};
@@ -203,6 +200,25 @@ public class MainActivity extends AppCompatActivity {
                     downloadAndInstall(info);
                 })
                 .setNegativeButton("나중에", null)
+                .show();
+    }
+
+    private void showSettingsDialog() {
+        String[] items = {"🔄 현재 페이지 새로고침", "🗑️ 캐시 초기화", "ℹ️ 앱 정보"};
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("⚙️ 설정")
+                .setItems(items, (DialogInterface dialog, int which) -> {
+                    if (which == 0) {
+                        WebView wv = classify(current);
+                        if (wv != null) wv.reload();
+                    } else if (which == 1) {
+                        diskCache.clear();
+                        handleToast("캐시 초기화 완료");
+                    } else if (which == 2) {
+                        showAboutDialog();
+                    }
+                })
+                .setNegativeButton("닫기", null)
                 .show();
     }
 
