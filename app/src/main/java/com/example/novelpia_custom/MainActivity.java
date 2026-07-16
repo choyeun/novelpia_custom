@@ -132,6 +132,20 @@ public class MainActivity extends AppCompatActivity {
                     return true;
                 });
 
+                // 서재 롱클릭 → 선호작
+                bottomNav.post(() -> {
+                    try {
+                        View navBook = bottomNav.findViewById(R.id.nav_book);
+                        if (navBook != null) {
+                            navBook.setOnLongClickListener(v -> {
+                                openBook(START_URL + "mybook/like");
+                                handleToast("선호작");
+                                return true;
+                            });
+                        }
+                    } catch (Exception ignored) {}
+                });
+
                 // 새로고침 버튼
                 ImageButton btnRefresh = findViewById(R.id.btnRefresh);
                 if (btnRefresh != null) {
