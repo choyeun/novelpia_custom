@@ -8,7 +8,7 @@ import java.util.Set;
 /**
  * WebView 리소스 캐싱 유틸 — static 헬퍼 메서드 모음
  * - getExtension: URL에서 확장자 추출
- * - isCacheableExtension: 이미지/폰트 캐싱 대상 확인
+ * - isCacheableExtension: 캐싱 대상 확인 (이미지 전용, 폰트 제외)
  * - mimeFromExtension: 확장자 → MIME 타입
  * - readAllBytes: InputStream → byte[]
  * - truncateUrl: 긴 URL 로그 출력용
@@ -16,9 +16,9 @@ import java.util.Set;
  * MainActivity의 WebViewClient anonymous class에서 호출됨
  */
 public class CachingWebViewClient {
+    /** 이미지 확장자만 캐싱 (폰트는 자간 깨짐 이슈로 제외) */
     private static final Set<String> CACHEABLE_EXTENSIONS = new HashSet<>(Arrays.asList(
-            ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".ico",
-            ".woff", ".woff2", ".ttf", ".otf", ".eot"
+            ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".ico"
     ));
 
     /** URL에서 파일 확장자 추출 (쿼리 파라미터 제외) */
@@ -47,11 +47,6 @@ public class CachingWebViewClient {
             case ".webp": return "image/webp";
             case ".svg":  return "image/svg+xml";
             case ".ico":  return "image/x-icon";
-            case ".woff": return "font/woff";
-            case ".woff2": return "font/woff2";
-            case ".ttf":  return "font/ttf";
-            case ".otf":  return "font/otf";
-            case ".eot":  return "application/vnd.ms-fontobject";
             default:  return "application/octet-stream";
         }
     }

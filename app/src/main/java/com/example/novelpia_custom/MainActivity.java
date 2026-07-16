@@ -84,9 +84,6 @@ public class MainActivity extends AppCompatActivity {
 
         diskCache = new DiskCache(getCacheDir());
 
-        // TODO: v1.4.1에서 제거 (Content-Encoding 버그 fix용 1회성 clear)
-        diskCache.clear();
-
         setContentView(R.layout.activity_main);
 
         wvMain = findViewById(R.id.wvMain);
