@@ -44,6 +44,9 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew assembleDebug
 
+      - name: Run unit tests
+        run: ./gradlew test --no-build-cache
+
       - name: Create Release and Upload APK
         env:
           GH_TOKEN: ${{ github.token }}
