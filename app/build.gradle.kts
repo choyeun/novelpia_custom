@@ -10,8 +10,8 @@ android {
         applicationId = "com.example.novelpia_custom"
         minSdk = 24
         targetSdk = 34
-        versionCode = 23
-        versionName = "1.5.7"
+        versionCode = 24
+        versionName = "1.5.8"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

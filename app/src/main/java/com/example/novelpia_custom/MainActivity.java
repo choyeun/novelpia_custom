@@ -449,6 +449,7 @@ public class MainActivity extends AppCompatActivity {
     private void openBook(String url) {
         wvBook.loadUrl(url);
         swapView(BOOK_INDEX, false);
+        bottomNav.setSelectedItemId(R.id.nav_book);
     }
     private void openMain(String url) {
         wvMain.loadUrl(url);
@@ -456,24 +457,32 @@ public class MainActivity extends AppCompatActivity {
         swapView(MAIN_INDEX, false);
         // 만약 초기화면으로 넘어온 경우 스택 초기화
         if(url.equals(START_URL)) backoffstack.clear();
+        bottomNav.setSelectedItemId(R.id.nav_main);
     }
     private void openViewer(String url) {
         if (!viewerString.equals(url)) wvViewer.loadUrl(url);
 
         swapView(VIEWER_INDEX, false);
         viewerString = url;
+        // 뷰어는 하단 내비 선택 해제 (메인 유지)
     }
     private void openSearch(String url) {
         if (!searchString.equals(url)) wvSearch.loadUrl(url);
 
         swapView(SEARCH_INDEX, false);
         searchString = url;
+        if (url.contains(RANKING_SUF)) {
+            bottomNav.setSelectedItemId(R.id.nav_ranking);
+        } else {
+            bottomNav.setSelectedItemId(R.id.nav_search);
+        }
     }
     private void openNovel(String url) {
         if(!novelString.equals(url)) wvNovel.loadUrl(url);
 
         swapView(NOVEL_INDEX, false);
         novelString = url;
+        // 소설 상세는 하단 내비 선택 해제 (메인 유지)
     }
     // 핸들러 ======================================================================================
     private void handleUrl(String url) {
