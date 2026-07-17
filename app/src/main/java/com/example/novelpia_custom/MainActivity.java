@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -272,22 +273,30 @@ public class MainActivity extends AppCompatActivity {
 
     /** APK 다운로드 + 설치 (백그라운드 스레드) */
     private void downloadAndInstall(final UpdateChecker.UpdateInfo info) {
-        // 다운로드 시작 토스트
-        runOnUiThread(() ->
-                Toast.makeText(this, "다운로드 시작...", Toast.LENGTH_SHORT).show()
-        );
+        // 진행률 다이얼로그
+        final ProgressDialog pd = new ProgressDialog(this);
+        pd.setTitle("📲 업데이트 다운로드");
+        pd.setMessage("APK 다운로드 중...");
+        pd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        pd.setMax(100);
+        pd.setCancelable(false);
+        pd.show();
 
         new Thread(() -> {
             UpdateInstaller.downloadAndInstall(info.downloadUrl, getApplicationContext(),
                     new UpdateInstaller.DownloadCallback() {
                         @Override
                         public void onProgress(int percent) {
-                            // 진행률 (필요시 Notification으로 확장 가능)
+                            runOnUiThread(() -> {
+                                pd.setProgress(percent);
+                                pd.setMessage("APK 다운로드 중... " + percent + "%");
+                            });
                         }
 
                         @Override
                         public void onComplete(boolean success, String message) {
                             runOnUiThread(() -> {
+                                pd.dismiss();
                                 String msg = success ? "설치를 시작합니다." : "업데이트 실패: " + message;
                                 Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
                             });
