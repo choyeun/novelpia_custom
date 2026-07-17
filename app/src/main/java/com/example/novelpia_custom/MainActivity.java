@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton btnGo;
     private BottomNavigationView bottomNav;
     private volatile boolean isBookLongPress = false;
+    private boolean isNavUpdating = false;
     // 페이지 이동용
     private final Deque<Byte> backoffstack = new ArrayDeque<>();
     private static final byte MAIN_INDEX = 0b0001;
@@ -122,6 +123,7 @@ public class MainActivity extends AppCompatActivity {
 
                 // 하단 내비게이션
                 bottomNav.setOnItemSelectedListener(item -> {
+                    if (isNavUpdating) return true;
                     int id = item.getItemId();
                     if (id == R.id.nav_main) {
                         openMain(START_URL);
@@ -452,42 +454,35 @@ public class MainActivity extends AppCompatActivity {
         if(index != VIEWER_INDEX) btnGo.setVisibility(View.VISIBLE);
         else btnGo.setVisibility(View.GONE);
 
-        String temp = toRead(index);
         classify(index).setVisibility(View.VISIBLE);
         // viewer 웹뷰가 아니거나 되돌리기 작업이 아닌 경우 스택에 삽입
         if((current != VIEWER_INDEX) && (!isbackoff)) backoffstack.push(current);
         current = index;
-        handleToast(temp);
     }
     private void openBook(String url) {
         wvBook.loadUrl(url);
         swapView(BOOK_INDEX, false);
-        bottomNav.setSelectedItemId(R.id.nav_book);
+        syncNav(R.id.nav_book);
     }
     private void openMain(String url) {
         wvMain.loadUrl(url);
-
         swapView(MAIN_INDEX, false);
-        // 만약 초기화면으로 넘어온 경우 스택 초기화
         if(url.equals(START_URL)) backoffstack.clear();
-        bottomNav.setSelectedItemId(R.id.nav_main);
+        syncNav(R.id.nav_main);
     }
     private void openViewer(String url) {
         if (!viewerString.equals(url)) wvViewer.loadUrl(url);
-
         swapView(VIEWER_INDEX, false);
         viewerString = url;
-        // 뷰어는 하단 내비 선택 해제 (메인 유지)
     }
     private void openSearch(String url) {
         if (!searchString.equals(url)) wvSearch.loadUrl(url);
-
         swapView(SEARCH_INDEX, false);
         searchString = url;
         if (url.contains(RANKING_SUF)) {
-            bottomNav.setSelectedItemId(R.id.nav_ranking);
+            syncNav(R.id.nav_ranking);
         } else {
-            bottomNav.setSelectedItemId(R.id.nav_search);
+            syncNav(R.id.nav_search);
         }
     }
     private void openNovel(String url) {
@@ -566,6 +561,13 @@ public class MainActivity extends AppCompatActivity {
         Toast myToast = Toast.makeText(this.getApplicationContext(),msg, Toast.LENGTH_SHORT);
         myToast.show();
         toastHandler.postDelayed(myToast::cancel, 500);
+    }
+
+    /** 하단 내비 선택 (재귀 방지) */
+    private void syncNav(int itemId) {
+        isNavUpdating = true;
+        bottomNav.setSelectedItemId(itemId);
+        isNavUpdating = false;
     }
     private String toRead(byte index) {
         if(index == SEARCH_INDEX) return "search";
