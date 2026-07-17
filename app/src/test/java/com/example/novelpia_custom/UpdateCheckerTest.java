@@ -50,8 +50,13 @@ public class UpdateCheckerTest {
     }
 
     @Test
-    public void parseVersion_혼합_빈배열() {
-        assertArrayEquals(new int[0], UpdateChecker.parseVersion("1.2.abc"));
+    public void parseVersion_혼합_숫자만파싱() {
+        assertArrayEquals(new int[]{1, 2}, UpdateChecker.parseVersion("1.2.abc"));
+    }
+
+    @Test
+    public void parseVersion_타임스탬프_숫자만파싱() {
+        assertArrayEquals(new int[]{1, 5, 16}, UpdateChecker.parseVersion("1.5.16.20260717T132600"));
     }
 
     // ─── isNewer ───────────────────────────────────────────
