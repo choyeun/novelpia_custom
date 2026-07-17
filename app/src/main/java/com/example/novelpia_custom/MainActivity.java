@@ -229,7 +229,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showSettingsDialog() {
-        String[] items = {"🔄 현재 페이지 새로고침", "🗑️ 캐시 초기화", "ℹ️ 앱 정보"};
+        String[] items = {"🔄 현재 페이지 새로고침", "🗑️ 캐시 초기화", "📲 업데이트 확인", "ℹ️ 앱 정보"};
         new MaterialAlertDialogBuilder(this)
                 .setTitle("⚙️ 설정")
                 .setItems(items, (DialogInterface dialog, int which) -> {
@@ -240,6 +240,8 @@ public class MainActivity extends AppCompatActivity {
                         diskCache.clear();
                         handleToast("캐시 초기화 완료");
                     } else if (which == 2) {
+                        checkForUpdate();
+                    } else if (which == 3) {
                         showAboutDialog();
                     }
                 })
