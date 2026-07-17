@@ -401,6 +401,10 @@ public class MainActivity extends AppCompatActivity {
                 super.onPageFinished(view, url);
                 // 모든 WebView에서 localStorage 데이터 수집
                 DataCollector.collect(view);
+                // mybook 페이지면 HTML에서 novel_no 전체 추출
+                if (url != null && url.contains("/mybook")) {
+                    DataCollector.collectMybookNovels(view);
+                }
                 // 노벨피아 하단바 숨기기 (앱 내비와 중복)
                 view.evaluateJavascript(
                     "(function(){" +

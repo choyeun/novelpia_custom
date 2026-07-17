@@ -69,4 +69,31 @@ public class DataCollector {
             wv.evaluateJavascript(readJS, null);
         }, 5000);
     }
+
+    /** mybook/last_view 페이지 HTML에서 novel_no 전체 추출 */
+    public static void collectMybookNovels(WebView wv) {
+        String js =
+            "(function() {" +
+            "  var links = document.querySelectorAll('a[href*=\"/novel/\"]');" +
+            "  var seen = {}; var result = [];" +
+            "  for (var i = 0; i < links.length; i++) {" +
+            "    var m = links[i].getAttribute('href').match(/\\/novel\\/(\\d+)/);" +
+            "    if (m && !seen[m[1]]) {" +
+            "      seen[m[1]] = true;" +
+            "      result.push({novel_no: m[1], title: links[i].textContent.trim()});" +
+            "    }" +
+            "  }" +
+            "  if (result.length > 0 && window.Android) {" +
+            "    var payload = JSON.stringify({" +
+            "      source: 'mybook_html'," +
+            "      novels: result," +
+            "      timestamp: new Date().toISOString()," +
+            "      url: window.location.href," +
+            "      count: result.length" +
+            "    });" +
+            "    Android.sendApiData(payload);" +
+            "  }" +
+            "})();";
+        wv.evaluateJavascript(js, null);
+    }
 }
