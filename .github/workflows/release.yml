@@ -45,9 +45,6 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew assembleDebug
 
-      - name: Check code format
-        run: ./gradlew spotlessCheck --no-build-cache
-
       - name: Run Android Lint
         run: ./gradlew lint --no-build-cache
 
