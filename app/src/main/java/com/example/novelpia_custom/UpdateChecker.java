@@ -132,17 +132,23 @@ public class UpdateChecker {
         return false; // 동일 버전
     }
 
-    /** "1.3.5" → {1, 3, 5} */
+    /** "1.3.5" → {1, 3, 5} — 숫자 아닌 세그먼트는 무시 */
     public static int[] parseVersion(String v) {
         if (v == null || v.isEmpty()) return new int[0];
         try {
             String[] parts = v.split("\\.");
-            int[] result = new int[parts.length];
-            for (int i = 0; i < parts.length; i++) {
-                result[i] = Integer.parseInt(parts[i]);
+            java.util.ArrayList<Integer> nums = new java.util.ArrayList<>();
+            for (String p : parts) {
+                try {
+                    nums.add(Integer.parseInt(p));
+                } catch (NumberFormatException e) {
+                    break; // 숫자가 아닌 부분부터 무시
+                }
             }
+            int[] result = new int[nums.size()];
+            for (int i = 0; i < nums.size(); i++) result[i] = nums.get(i);
             return result;
-        } catch (NumberFormatException e) {
+        } catch (Exception e) {
             return new int[0];
         }
     }

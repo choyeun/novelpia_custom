@@ -31,8 +31,9 @@ jobs:
       - name: Update version from tag
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          sed -i "s/versionName = \".*\"/versionName = \"$VERSION\"/" app/build.gradle.kts
-          echo "Version set to $VERSION"
+          TIMESTAMP=$(date -u +%Y%m%dT%H%M%S)
+          sed -i "s/versionName = \".*\"/versionName = \"$VERSION.$TIMESTAMP\"/" app/build.gradle.kts
+          echo "Version set to $VERSION.$TIMESTAMP"
 
       - name: Decode Keystore
         run: |
