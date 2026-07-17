@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
     // url 식별용
     private static final String START_URL  = "https://novelpia.com/";
     private static final String SEARCH_SUF = "search";
-    private static final String RANKING_SUF = "ranking";
+    private static final String RANKING_SUF = "top100";
     private static final String VIEWER_SUF = "viewer";
     private static final String BOOK_SUF = "mybook";
     private static final String NOVEL_SUF = "novel/"; // novelpia 중복
@@ -221,13 +221,18 @@ public class MainActivity extends AppCompatActivity {
 
     /** 업데이트 다이얼로그 표시 */
     private void showUpdateDialog(final UpdateChecker.UpdateInfo info) {
+        String body = (info.releaseBody != null && !info.releaseBody.isEmpty())
+                ? info.releaseBody : "상세 내역은 GitHub에서 확인하세요.";
+        // 너무 길면 자르기
+        if (body.length() > 500) body = body.substring(0, 500) + "...";
         new MaterialAlertDialogBuilder(this)
                 .setTitle("📲 업데이트 가능")
                 .setMessage(String.format(
-                        "새 버전 %s이(가) 있습니다.\n\n현재 버전: %s\nAPK 크기: %s",
+                        "새 버전 %s이(가) 있습니다.\n\n현재 버전: %s\nAPK 크기: %s\n\n📋 변경사항:\n%s",
                         info.latestVersion,
                         BuildConfig.VERSION_NAME,
-                        info.apkSize > 0 ? String.format("%.1fMB", info.apkSize / 1024f / 1024f) : "?"
+                        info.apkSize > 0 ? String.format("%.1fMB", info.apkSize / 1024f / 1024f) : "?",
+                        body
                 ))
                 .setPositiveButton("지금 업데이트", (DialogInterface dialog, int which) -> {
                     downloadAndInstall(info);
