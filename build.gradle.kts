@@ -9,6 +9,7 @@ subprojects {
     configure<com.diffplug.gradle.spotless.SpotlessExtension> {
         java {
             target("src/**/*.java")
+            targetExclude("src/test/**", "src/androidTest/**")
             googleJavaFormat()
             trimTrailingWhitespace()
             endWithNewline()
