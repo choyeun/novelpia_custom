@@ -129,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
                     if (id == R.id.nav_main) {
                         openMain(START_URL);
                     } else if (id == R.id.nav_ranking) {
-                        openSearch(START_URL + RANKING_SUF);
+                        openMain(START_URL + RANKING_SUF);
                     } else if (id == R.id.nav_search) {
                         openSearch(START_URL + SEARCH_SUF);
                     } else if (id == R.id.nav_book) {
@@ -470,7 +470,11 @@ public class MainActivity extends AppCompatActivity {
         wvMain.loadUrl(url);
         swapView(MAIN_INDEX, false);
         if(url.equals(START_URL)) backoffstack.clear();
-        syncNav(R.id.nav_main);
+        if (url.contains(RANKING_SUF)) {
+            syncNav(R.id.nav_ranking);
+        } else {
+            syncNav(R.id.nav_main);
+        }
     }
     private void openViewer(String url) {
         if (!viewerString.equals(url)) wvViewer.loadUrl(url);
