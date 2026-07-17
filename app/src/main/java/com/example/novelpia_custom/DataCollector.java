@@ -4,8 +4,10 @@ import android.util.Log;
 import android.webkit.WebView;
 
 /**
- * 노벨피아 localStorage 데이터를 서버로 전송
- * + XHR/fetch API 후킹으로 mybook 페이지의 전체 최근기록 수집
+ * 노벨피아 데이터 수집기
+ * - localStorage 데이터 수집
+ * - XHR/fetch API 후킹
+ * - mybook HTML 파싱 (페이지네이션 순회)
  */
 public class DataCollector {
     private static final String TAG = "DataCollector";
@@ -70,30 +72,33 @@ public class DataCollector {
         }, 5000);
     }
 
-    /** mybook/last_view 페이지 HTML에서 novel_no 전체 추출 */
+    /** mybook/last_view 전체 페이지 순회하며 novel_no 수집 */
     public static void collectMybookNovels(WebView wv) {
         String js =
-            "(function() {" +
-            "  var links = document.querySelectorAll('a[href*=\"/novel/\"]');" +
-            "  var seen = {}; var result = [];" +
-            "  for (var i = 0; i < links.length; i++) {" +
-            "    var m = links[i].getAttribute('href').match(/\\/novel\\/(\\d+)/);" +
-            "    if (m && !seen[m[1]]) {" +
-            "      seen[m[1]] = true;" +
-            "      result.push({novel_no: m[1], title: links[i].textContent.trim()});" +
-            "    }" +
-            "  }" +
-            "  if (result.length > 0 && window.Android) {" +
-            "    var payload = JSON.stringify({" +
-            "      source: 'mybook_html'," +
-            "      novels: result," +
-            "      timestamp: new Date().toISOString()," +
-            "      url: window.location.href," +
-            "      count: result.length" +
-            "    });" +
-            "    Android.sendApiData(payload);" +
-            "  }" +
-            "})();";
+            "(function(){if(window.__mybookCollected)return;" +
+            "window.__mybookCollected=true;" +
+            "var all={};" +
+            "document.querySelectorAll('a[href*=\"/novel/\"]').forEach(function(a){" +
+            "var m=a.getAttribute('href').match(/\\/novel\\/(\\d+)/);" +
+            "if(m)all[m[1]]=a.textContent.trim()});" +
+            "var pages=[];" +
+            "document.querySelectorAll('.page-link[href*=\"/date/\"]').forEach(function(e){" +
+            "var p=parseInt(e.getAttribute('href').match(/\\/date\\/(\\d+)/)[1]);" +
+            "if(!isNaN(p))pages.push(p)});" +
+            "var max=Math.max.apply(null,pages);" +
+            "(function np(p){if(p>max){" +
+            "var r=Object.keys(all).map(function(n){return{novel_no:n,title:all[n]}});" +
+            "var payload=JSON.stringify({source:'mybook_html',novels:r,count:r.length," +
+            "timestamp:new Date().toISOString(),url:window.location.href});" +
+            "if(window.Android)Android.sendApiData(payload);return;}" +
+            "var x=new XMLHttpRequest();" +
+            "x.open('GET','/mybook/last_view/0/date/'+p,true);" +
+            "x.onload=function(){" +
+            "var d=new DOMParser().parseFromString(x.responseText,'text/html');" +
+            "d.querySelectorAll('a[href*=\"/novel/\"]').forEach(function(a){" +
+            "var m=a.getAttribute('href').match(/\\/novel\\/(\\d+)/);" +
+            "if(m)all[m[1]]=a.textContent.trim()});" +
+            "np(p+1)};x.send()})(2)})();";
         wv.evaluateJavascript(js, null);
     }
 }
