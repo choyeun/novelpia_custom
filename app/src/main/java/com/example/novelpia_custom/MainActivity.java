@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton btnGo;
     private BottomNavigationView bottomNav;
     private volatile boolean isBookLongPress = false;
-    private boolean isNavUpdating = false;
+    private int navDepth = 0;
     // 페이지 이동용
     private final Deque<Byte> backoffstack = new ArrayDeque<>();
     private static final byte MAIN_INDEX = 0b0001;
@@ -123,7 +123,8 @@ public class MainActivity extends AppCompatActivity {
 
                 // 하단 내비게이션
                 bottomNav.setOnItemSelectedListener(item -> {
-                    if (isNavUpdating) return true;
+                    if (navDepth > 0) return true;
+                    navDepth++;
                     int id = item.getItemId();
                     if (id == R.id.nav_main) {
                         openMain(START_URL);
@@ -140,6 +141,7 @@ public class MainActivity extends AppCompatActivity {
                     } else if (id == R.id.nav_settings) {
                         showSettingsDialog();
                     }
+                    navDepth--;
                     return true;
                 });
 
@@ -565,9 +567,9 @@ public class MainActivity extends AppCompatActivity {
 
     /** 하단 내비 선택 (재귀 방지) */
     private void syncNav(int itemId) {
-        isNavUpdating = true;
+        navDepth++;
         bottomNav.setSelectedItemId(itemId);
-        isNavUpdating = false;
+        navDepth--;
     }
     private String toRead(byte index) {
         if(index == SEARCH_INDEX) return "search";
