@@ -64,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
     // url 식별용
     private static final String START_URL  = "https://novelpia.com/";
     private static final String SEARCH_SUF = "search";
+    private static final String RANKING_SUF = "ranking";
     private static final String VIEWER_SUF = "viewer";
     private static final String BOOK_SUF = "mybook";
     private static final String NOVEL_SUF = "novel/"; // novelpia 중복
@@ -123,6 +124,8 @@ public class MainActivity extends AppCompatActivity {
                     int id = item.getItemId();
                     if (id == R.id.nav_main) {
                         openMain(START_URL);
+                    } else if (id == R.id.nav_ranking) {
+                        openSearch(START_URL + RANKING_SUF);
                     } else if (id == R.id.nav_search) {
                         openSearch(START_URL + SEARCH_SUF);
                     } else if (id == R.id.nav_book) {
