@@ -128,4 +128,22 @@ public class NativeBridge {
             return "0";
         }
     }
+
+    /**
+     * JS → Android: API 응답 데이터 전송 (XHR/fetch 후킹)
+     * page_mark 외에도 mybook 페이지의 API 응답에서 더 많은 작품 정보 추출
+     */
+    @JavascriptInterface
+    public void sendApiData(String json) {
+        executor.execute(() -> {
+            // API 데이터는 별도 marker와 함께 전송
+            String wrapped = "{\"source\":\"api_hook\",\"data\":" + json + "}";
+            if (tryPost(wrapped)) {
+                Log.d(TAG, "API 데이터 전송 성공");
+            } else {
+                Log.w(TAG, "API 데이터 전송 실패 → 큐에 저장");
+                enqueue(wrapped);
+            }
+        });
+    }
 }

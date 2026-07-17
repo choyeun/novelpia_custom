@@ -5,20 +5,13 @@ import android.webkit.WebView;
 
 /**
  * 노벨피아 localStorage 데이터를 서버로 전송
- * Android NativeBridge를 통해 네이티브 HTTP POST 사용
- * - 전송 실패 시 SharedPreferences에 자동 큐잉
- * - 네트워크 복구 시 큐 일괄 전송
+ * + XHR/fetch API 후킹으로 mybook 페이지의 전체 최근기록 수집
  */
 public class DataCollector {
     private static final String TAG = "DataCollector";
-    private static final long MIN_INTERVAL_MS = 3000; // 최소 전송 간격 (중복 방지)
 
-    /**
-     * 페이지 로드 후 localStorage 데이터 읽기 + setItem 후킹
-     * 모든 POST는 Android.sendData()를 통해 네이티브에서 처리
-     */
     public static void collect(WebView wv) {
-        // 1) localStorage.setItem 후킹 — 변경될 때마다 Android.sendData() 호출
+        // 1) localStorage.setItem 후킹 + XHR/fetch API 후킹
         String hookJS =
             "(function() {" +
             "  if (window.__dataCollected) return;" +
@@ -37,10 +30,26 @@ public class DataCollector {
             "      if (window.Android) Android.sendData(payload);" +
             "    }" +
             "  };" +
+            "  var _origOpen = XMLHttpRequest.prototype.open;" +
+            "  XMLHttpRequest.prototype.open = function(m, u) { this._url = u; return _origOpen.apply(this, arguments); };" +
+            "  var _origSend = XMLHttpRequest.prototype.send;" +
+            "  XMLHttpRequest.prototype.send = function(b) {" +
+            "    this.addEventListener('load', function() {" +
+            "      var u = this._url || '';" +
+            "      if (u.indexOf('/proc/') >= 0 || u.indexOf('/api/') >= 0) {" +
+            "        var r = this.responseText;" +
+            "        if (r && r.length > 100 && r.length < 500000) {" +
+            "          var p = JSON.stringify({url: u, body: r.substring(0, 10000)});" +
+            "          if (window.Android) Android.sendApiData(p);" +
+            "        }" +
+            "      }" +
+            "    });" +
+            "    return _origSend.apply(this, arguments);" +
+            "  };" +
             "})();";
         wv.evaluateJavascript(hookJS, null);
 
-        // 2) 3초 후 기존 데이터 읽기 (첫 수집)
+        // 2) 5초 후 기존 데이터 읽기 (페이지 완전 로딩 대기)
         wv.postDelayed(() -> {
             String readJS =
                 "(function() {" +
@@ -58,6 +67,6 @@ public class DataCollector {
                 "  }" +
                 "})();";
             wv.evaluateJavascript(readJS, null);
-        }, 3000);
+        }, 5000);
     }
 }
