@@ -129,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
                         if (isBookLongPress) {
                             isBookLongPress = false;
                         } else {
-                            openBook(START_URL + BOOK_SUF);
+                            openBook(START_URL + "mybook/last_view");
                         }
                     } else if (id == R.id.nav_settings) {
                         showSettingsDialog();
