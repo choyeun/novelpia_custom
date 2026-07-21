@@ -16,6 +16,16 @@
             android:layout_height="0dp"
             android:layout_weight="1">
 
+            <ProgressBar
+                android:id="@+id/loadingBar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="3dp"
+                android:layout_gravity="top"
+                android:indeterminate="true"
+                android:visibility="gone"
+                android:progressTint="@color/accent" />
+
             <WebView
                     android:id="@+id/wvMain"
                     android:layout_width="match_parent"

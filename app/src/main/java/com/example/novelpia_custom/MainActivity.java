@@ -30,6 +30,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -48,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private String wvUserAgent = null;
     private DiskCache diskCache;
     private ImageButton btnGo;
+    private ProgressBar loadingBar;
     private BottomNavigationView bottomNav;
     private volatile boolean isBookLongPress = false;
     private int navDepth = 0;
@@ -100,6 +102,7 @@ public class MainActivity extends AppCompatActivity {
         wvBook = findViewById(R.id.wvBook);
         wvNovel = findViewById(R.id.wvNovel);
         btnGo = findViewById(R.id.btnGo);
+        loadingBar = findViewById(R.id.loadingBar);
         bottomNav = findViewById(R.id.bottomNav);
 
         setupWebView(wvMain);
@@ -321,7 +324,7 @@ public class MainActivity extends AppCompatActivity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
-        s.setCacheMode(WebSettings.LOAD_DEFAULT);
+        s.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         // 구글 로그인 문제 수정
         if (wvUserAgent == null) {
             wvUserAgent = s.getUserAgentString().replace("; wv", "");
@@ -406,8 +409,15 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
+            public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+                super.onPageStarted(view, url, favicon);
+                loadingBar.setVisibility(View.VISIBLE);
+            }
+
+            @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
+                loadingBar.setVisibility(View.GONE);
                 // 모든 WebView에서 localStorage 데이터 수집
                 DataCollector.collect(view);
                 // mybook 페이지면 HTML에서 novel_no 전체 추출
