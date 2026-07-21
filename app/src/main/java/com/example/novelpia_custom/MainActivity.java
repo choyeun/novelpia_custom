@@ -223,15 +223,8 @@ public class MainActivity extends AppCompatActivity {
         new Thread(() -> {
             final UpdateChecker.UpdateInfo info = UpdateChecker.check(BuildConfig.VERSION_NAME);
             if (info.hasUpdate) {
-                // 이미 다운로드된 APK가 있는지 확인
-                File cached = UpdateInstaller.getDownloadedApkFile(this);
-                if (cached != null) {
-                    // 알림으로 설치 알림
-                    UpdateInstaller.showUpdateNotification(this, info.latestVersion);
-                    runOnUiThread(() -> startUpdateReminder());
-                    return;
-                }
-                // 백그라운드 다운로드 시작
+                // 새 버전이 있으면 무조건 기존 캐시 APK 삭제 후 재다운로드
+                UpdateInstaller.deleteDownloadedApk(this);
                 runOnUiThread(() -> handleToast("📲 업데이트 다운로드 시작"));
                 UpdateInstaller.downloadApk(info.downloadUrl, getApplicationContext(),
                         new UpdateInstaller.DownloadCallback() {
@@ -246,6 +239,9 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             }
                         });
+            } else {
+                // 이미 최신 버전이면 스테일 캐시 APK 정리
+                UpdateInstaller.deleteDownloadedApk(this);
             }
         }).start();
     }

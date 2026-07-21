@@ -134,7 +134,16 @@ public class UpdateInstaller {
         return apkFile.exists() ? apkFile : null;
     }
 
-    /** 캐시된 APK 설치 인텐트 실행 */
+    /** 캐시된 APK 파일 삭제 */
+    public static void deleteDownloadedApk(Context context) {
+        File apkFile = new File(context.getCacheDir(), APK_FILENAME);
+        if (apkFile.exists()) {
+            apkFile.delete();
+            Log.d(TAG, "APK 캐시 파일 삭제 완료");
+        }
+    }
+
+    /** 캐시된 APK 설치 인텐트 실행 (설치 후 파일 자동 삭제) */
     public static void installDownloadedApk(Context context) {
         File apkFile = getDownloadedApkFile(context);
         if (apkFile == null) {
@@ -142,6 +151,8 @@ public class UpdateInstaller {
             return;
         }
         installApk(context, apkFile);
+        // 인텐트 실행 후 APK 파일 삭제 (PackageInstaller가 URI를 읽은 후이므로 안전)
+        deleteDownloadedApk(context);
     }
 
     /** FileProvider URI로 설치 인텐트 실행 */
