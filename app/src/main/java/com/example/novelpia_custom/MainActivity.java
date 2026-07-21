@@ -332,7 +332,7 @@ public class MainActivity extends AppCompatActivity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
-        s.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+        s.setCacheMode(WebSettings.LOAD_DEFAULT);
         // 구글 로그인 문제 수정
         if (wvUserAgent == null) {
             wvUserAgent = s.getUserAgentString().replace("; wv", "");
