@@ -7,12 +7,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -36,6 +34,7 @@ import android.widget.Toast;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
+import java.io.File;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -93,6 +92,9 @@ public class MainActivity extends AppCompatActivity {
         cm.setAcceptCookie(true);
 
         diskCache = new DiskCache(getCacheDir());
+
+        // 알림 채널 생성 (업데이트 다운로드 완료 알림용)
+        UpdateInstaller.createNotificationChannel(this);
 
         setContentView(R.layout.activity_main);
 
@@ -212,36 +214,75 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ─── 자동 업데이트 ────────────────────────────────────
-    /** 백그라운드 스레드에서 GitHub 최신 버전 확인 */
+    /** 백그라운드 스레드에서 GitHub 최신 버전 확인 → 자동 다운로드 + 알림 */
     private void checkForUpdate() {
         new Thread(() -> {
             final UpdateChecker.UpdateInfo info = UpdateChecker.check(BuildConfig.VERSION_NAME);
             if (info.hasUpdate) {
-                runOnUiThread(() -> showUpdateDialog(info));
+                // 이미 다운로드된 APK가 있는지 확인
+                File cached = UpdateInstaller.getDownloadedApkFile(this);
+                if (cached != null) {
+                    // 알림으로 설치 알림
+                    UpdateInstaller.showUpdateNotification(this, info.latestVersion);
+                    return;
+                }
+                // 백그라운드 다운로드 시작
+                runOnUiThread(() -> handleToast("📲 업데이트 다운로드 시작"));
+                UpdateInstaller.downloadApk(info.downloadUrl, getApplicationContext(),
+                        new UpdateInstaller.DownloadCallback() {
+                            @Override
+                            public void onProgress(int percent) {}
+                            @Override
+                            public void onComplete(boolean success, String message) {
+                                if (success) {
+                                    UpdateInstaller.showUpdateNotification(
+                                            MainActivity.this, info.latestVersion);
+                                }
+                            }
+                        });
             }
         }).start();
     }
 
-    /** 업데이트 다이얼로그 표시 */
-    private void showUpdateDialog(final UpdateChecker.UpdateInfo info) {
-        String body = (info.releaseBody != null && !info.releaseBody.isEmpty())
-                ? info.releaseBody : "상세 내역은 GitHub에서 확인하세요.";
-        // 너무 길면 자르기
-        if (body.length() > 500) body = body.substring(0, 500) + "...";
-        new MaterialAlertDialogBuilder(this)
-                .setTitle("📲 업데이트 가능")
-                .setMessage(String.format(
-                        "새 버전 %s이(가) 있습니다.\n\n현재 버전: %s\nAPK 크기: %s\n\n📋 변경사항:\n%s",
-                        info.latestVersion,
-                        BuildConfig.VERSION_NAME,
-                        info.apkSize > 0 ? String.format("%.1fMB", info.apkSize / 1024f / 1024f) : "?",
-                        body
-                ))
-                .setPositiveButton("지금 업데이트", (DialogInterface dialog, int which) -> {
-                    downloadAndInstall(info);
-                })
-                .setNegativeButton("나중에", null)
-                .show();
+    /** 설정 메뉴에서 업데이트 확인 시: APK 있으면 즉시 설치, 없으면 GitHub 확인 */
+    private void checkForUpdateFromSettings() {
+        // 이미 다운로드된 APK 확인
+        File cached = UpdateInstaller.getDownloadedApkFile(this);
+        if (cached != null) {
+            // 설치 확인 다이얼로그
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("📲 업데이트 설치")
+                    .setMessage("v" + BuildConfig.VERSION_NAME + " → 신규 버전\n\nAPK가 이미 다운로드되어 있습니다. 지금 설치하시겠습니까?")
+                    .setPositiveButton("설치", (dialog, which) -> {
+                        UpdateInstaller.installDownloadedApk(MainActivity.this);
+                    })
+                    .setNegativeButton("취소", null)
+                    .show();
+            return;
+        }
+        // GitHub에서 버전 확인
+        new Thread(() -> {
+            final UpdateChecker.UpdateInfo info = UpdateChecker.check(BuildConfig.VERSION_NAME);
+            if (info.hasUpdate) {
+                runOnUiThread(() -> handleToast("📲 업데이트 다운로드 시작"));
+                UpdateInstaller.downloadApk(info.downloadUrl, getApplicationContext(),
+                        new UpdateInstaller.DownloadCallback() {
+                            @Override
+                            public void onProgress(int percent) {}
+                            @Override
+                            public void onComplete(boolean success, String message) {
+                                if (success) {
+                                    UpdateInstaller.showUpdateNotification(
+                                            MainActivity.this, info.latestVersion);
+                                } else {
+                                    runOnUiThread(() -> handleToast("❌ 업데이트 실패: " + message));
+                                }
+                            }
+                        });
+            } else {
+                runOnUiThread(() -> handleToast("✓ 최신 버전입니다"));
+            }
+        }).start();
     }
 
     private void showSettingsDialog() {
@@ -256,7 +297,7 @@ public class MainActivity extends AppCompatActivity {
                         diskCache.clear();
                         handleToast("캐시 초기화 완료");
                     } else if (which == 2) {
-                        checkForUpdate();
+                        checkForUpdateFromSettings();
                     } else if (which == 3) {
                         showAboutDialog();
                     }
@@ -281,40 +322,6 @@ public class MainActivity extends AppCompatActivity {
                 .setMessage(msg)
                 .setPositiveButton("닫기", null)
                 .show();
-    }
-
-    /** APK 다운로드 + 설치 (백그라운드 스레드) */
-    private void downloadAndInstall(final UpdateChecker.UpdateInfo info) {
-        // 진행률 다이얼로그
-        final ProgressDialog pd = new ProgressDialog(this);
-        pd.setTitle("📲 업데이트 다운로드");
-        pd.setMessage("APK 다운로드 중...");
-        pd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        pd.setMax(100);
-        pd.setCancelable(false);
-        pd.show();
-
-        new Thread(() -> {
-            UpdateInstaller.downloadAndInstall(info.downloadUrl, getApplicationContext(),
-                    new UpdateInstaller.DownloadCallback() {
-                        @Override
-                        public void onProgress(int percent) {
-                            runOnUiThread(() -> {
-                                pd.setProgress(percent);
-                                pd.setMessage("APK 다운로드 중... " + percent + "%");
-                            });
-                        }
-
-                        @Override
-                        public void onComplete(boolean success, String message) {
-                            runOnUiThread(() -> {
-                                pd.dismiss();
-                                String msg = success ? "설치를 시작합니다." : "업데이트 실패: " + message;
-                                Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
-                            });
-                        }
-                    });
-        }).start();
     }
 
     // 웹뷰 초기화

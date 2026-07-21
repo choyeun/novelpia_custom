@@ -16,11 +16,10 @@ import java.util.Set;
  * MainActivity의 WebViewClient anonymous class에서 호출됨
  */
 public class CachingWebViewClient {
-    /** 이미지 + CSS/JS/폰트 캐싱 (폰트는 Content-Encoding 버그 방지 위해 encoding=\"\" 필수) */
+    /** 이미지 + CSS/JS 캐싱 (폰트는 자간 깨짐 이슈로 제외) */
     private static final Set<String> CACHEABLE_EXTENSIONS = new HashSet<>(Arrays.asList(
             ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".ico",
-            ".css", ".js",
-            ".woff", ".woff2", ".ttf", ".eot", ".otf"
+            ".css", ".js"
     ));
 
     /** URL에서 파일 확장자 추출 (쿼리 파라미터 제외) */
@@ -51,11 +50,6 @@ public class CachingWebViewClient {
             case ".ico":  return "image/x-icon";
             case ".css":  return "text/css";
             case ".js":   return "application/javascript";
-            case ".woff": return "font/woff";
-            case ".woff2":return "font/woff2";
-            case ".ttf":  return "font/ttf";
-            case ".eot":  return "application/vnd.ms-fontobject";
-            case ".otf":  return "font/otf";
             default:  return "application/octet-stream";
         }
     }
