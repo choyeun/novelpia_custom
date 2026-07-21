@@ -455,6 +455,7 @@ public class MainActivity extends AppCompatActivity {
             public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
                 loadingBar.setVisibility(View.VISIBLE);
+                handleToast("📖 로딩 중...");
             }
 
             @Override
