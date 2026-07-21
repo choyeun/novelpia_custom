@@ -84,6 +84,9 @@ public class MainActivity extends AppCompatActivity {
     private static final String KEY_LAST_READ_NOVEL_URL = "last_read_novel_url";
     // Toast 핸들러
     private final Handler toastHandler = new Handler(Looper.getMainLooper());
+    // 업데이트 설치 알림 주기 토스트
+    private final Handler updateReminderHandler = new Handler(Looper.getMainLooper());
+    private boolean updateReminderActive = false;
     // 메인코드 =====================================================================================
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -225,6 +228,7 @@ public class MainActivity extends AppCompatActivity {
                 if (cached != null) {
                     // 알림으로 설치 알림
                     UpdateInstaller.showUpdateNotification(this, info.latestVersion);
+                    runOnUiThread(() -> startUpdateReminder());
                     return;
                 }
                 // 백그라운드 다운로드 시작
@@ -238,6 +242,7 @@ public class MainActivity extends AppCompatActivity {
                                 if (success) {
                                     UpdateInstaller.showUpdateNotification(
                                             MainActivity.this, info.latestVersion);
+                                    runOnUiThread(() -> startUpdateReminder());
                                 }
                             }
                         });
@@ -255,6 +260,7 @@ public class MainActivity extends AppCompatActivity {
                     .setTitle("📲 업데이트 설치")
                     .setMessage("v" + BuildConfig.VERSION_NAME + " → 신규 버전\n\nAPK가 이미 다운로드되어 있습니다. 지금 설치하시겠습니까?")
                     .setPositiveButton("설치", (dialog, which) -> {
+                        stopUpdateReminder();
                         UpdateInstaller.installDownloadedApk(MainActivity.this);
                     })
                     .setNegativeButton("취소", null)
@@ -275,6 +281,7 @@ public class MainActivity extends AppCompatActivity {
                                 if (success) {
                                     UpdateInstaller.showUpdateNotification(
                                             MainActivity.this, info.latestVersion);
+                                    runOnUiThread(() -> startUpdateReminder());
                                 } else {
                                     runOnUiThread(() -> handleToast("❌ 업데이트 실패: " + message));
                                 }
@@ -285,6 +292,38 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
     }
+
+    // ─── 업데이트 설치 알림 주기 토스트 ────────────────────
+    /** APK 다운로드 완료 시 뷰어 아닐 때만 토스트를 주기적으로 띄움 */
+    private void startUpdateReminder() {
+        if (updateReminderActive) return;
+        updateReminderActive = true;
+        updateReminderRunnable.run();
+    }
+
+    private void stopUpdateReminder() {
+        updateReminderActive = false;
+        updateReminderHandler.removeCallbacks(updateReminderRunnable);
+    }
+
+    private final Runnable updateReminderRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!updateReminderActive) return;
+            // APK가 아직 있는지 확인
+            File cached = UpdateInstaller.getDownloadedApkFile(MainActivity.this);
+            if (cached == null) {
+                stopUpdateReminder();
+                return;
+            }
+            // 뷰어 중이 아닐 때만 토스트
+            if (current != VIEWER_INDEX) {
+                handleToast("📲 업데이트 설치 가능 — 설정에서 확인");
+            }
+            // 30초마다 반복
+            updateReminderHandler.postDelayed(this, 30000);
+        }
+    };
 
     private void showSettingsDialog() {
         String[] items = {"🔄 현재 페이지 새로고침", "🗑️ 캐시 초기화", "📲 업데이트 확인", "ℹ️ 앱 정보"};
