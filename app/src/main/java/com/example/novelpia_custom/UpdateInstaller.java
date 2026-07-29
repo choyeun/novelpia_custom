@@ -143,7 +143,7 @@ public class UpdateInstaller {
         }
     }
 
-    /** 캐시된 APK 설치 인텐트 실행 (설치 후 파일 자동 삭제) */
+    /** 캐시된 APK 설치 인텐트 실행 */
     public static void installDownloadedApk(Context context) {
         File apkFile = getDownloadedApkFile(context);
         if (apkFile == null) {
@@ -151,8 +151,8 @@ public class UpdateInstaller {
             return;
         }
         installApk(context, apkFile);
-        // 인텐트 실행 후 APK 파일 삭제 (PackageInstaller가 URI를 읽은 후이므로 안전)
-        deleteDownloadedApk(context);
+        // 파일은 삭제하지 않음 — 다음 업데이트 체크 시 자동 정리됨
+        // (checkForUpdate에서 새 버전 다운로드 전 deleteDownloadedApk 호출)
     }
 
     /** FileProvider URI로 설치 인텐트 실행 */
