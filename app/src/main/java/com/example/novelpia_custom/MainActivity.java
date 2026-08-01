@@ -477,6 +477,16 @@ public class MainActivity extends AppCompatActivity {
                     "var f=document.querySelector('footer');" +
                     "if(f){f.style.display='none';}" +
                     "})();", null);
+                // 뷰어 페이지면 자동 추천 (최초 1회)
+                if (url != null && url.contains("/viewer/")) {
+                    view.evaluateJavascript(
+                        "(function(){" +
+                        "if(window.__voteDone)return;" +
+                        "window.__voteDone=true;" +
+                        "var btn=document.getElementById('btn_episode_vote');" +
+                        "if(btn){btn.click();}" +
+                        "})();", null);
+                }
             }
         });
         // 얼럿창 처리
