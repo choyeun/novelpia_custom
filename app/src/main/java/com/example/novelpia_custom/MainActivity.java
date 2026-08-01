@@ -352,6 +352,7 @@ public class MainActivity extends AppCompatActivity {
                 + "• 읽은 기록 자동 수집\n"
                 + "• 자동 업데이트\n"
                 + "• 이미지 캐싱 (데이터 절약)\n"
+                + "• 로그인 쿠키 자동 수집\\n"
                 + "• 볼륨키 페이지 이동";
         new MaterialAlertDialogBuilder(this)
                 .setTitle("ℹ️ 정보")
