@@ -12,6 +12,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -39,7 +40,7 @@ import java.io.File;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-import moe.shizuku.api.Shizuku;
+import rikka.shizuku.Shizuku;
 
 public class MainActivity extends AppCompatActivity {
     // 웹뷰
@@ -92,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
     // Shizuku 권한 리스너
     private final Shizuku.OnRequestPermissionResultListener shizukuPermissionListener =
             (requestCode, grantResult) -> {
-                if (grantResult == Shizuku.OnRequestPermissionResultListener.GRANTED) {
+                if (grantResult == PackageManager.PERMISSION_GRANTED) {
                     Log.d("Shizuku", "권한 획득 — 다음 업데이트 자동 설치 가능");
                 }
             };
@@ -233,7 +234,7 @@ public class MainActivity extends AppCompatActivity {
     private void initShizuku() {
         try {
             Shizuku.addRequestPermissionResultListener(shizukuPermissionListener);
-            if (Shizuku.pingBinder() && !Shizuku.isGranted()) {
+            if (Shizuku.pingBinder() && Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
                 Shizuku.requestPermission(10001);
                 Log.d("Shizuku", "권한 요청 중...");
             } else if (Shizuku.pingBinder()) {

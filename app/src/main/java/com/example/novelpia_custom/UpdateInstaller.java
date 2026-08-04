@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
@@ -18,7 +19,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import moe.shizuku.api.Shizuku;
+import rikka.shizuku.Shizuku;
 
 /**
  * APK 다운로드 + 설치 + 알림
@@ -221,7 +222,7 @@ public class UpdateInstaller {
     private static boolean installApkWithShizuku(File apkFile) {
         try {
             if (!Shizuku.pingBinder() || Shizuku.getVersion() < 11) return false;
-            if (!Shizuku.isGranted()) return false;
+            if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) return false;
 
             String apkPath = apkFile.getAbsolutePath();
             Process process = Shizuku.newProcess(
@@ -245,7 +246,8 @@ public class UpdateInstaller {
     /** Shizuku 활성화 + 권한 보유 여부 */
     public static boolean isShizukuReady() {
         try {
-            return Shizuku.pingBinder() && Shizuku.getVersion() >= 11 && Shizuku.isGranted();
+            return Shizuku.pingBinder() && Shizuku.getVersion() >= 11
+                    && Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED;
         } catch (Exception e) {
             return false;
         }
