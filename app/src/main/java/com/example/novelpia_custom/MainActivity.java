@@ -524,19 +524,30 @@ public class MainActivity extends AppCompatActivity {
                     "var f=document.querySelector('footer');" +
                     "if(f){f.style.display='none';}" +
                     "})();", null);
-                // 뷰어 페이지면 자동 추천 (토글 방지)
-                // Vue 마운트 후 img src가 recommend_off(미추천)일 때만 클릭
+                // 뷰어 페이지면 자동 추천 (서버 API로 상태 확인 후 클릭)
                 if (url != null && url.contains("/viewer/")) {
                     view.evaluateJavascript(
                         "(function(){" +
                         "if(window.__voteDone)return;" +
                         "window.__voteDone=true;" +
-                        "setTimeout(function(){" +
+                        "var no=window.location.pathname.split('/').pop();" +
+                        "if(!no)return;" +
+                        "var csrf=(document.querySelector('meta[name=csrf-token]')||{}).content;" +
+                        "if(!csrf){" +
+                        "var m=document.body.innerHTML.match(/csrf[\\\"\\s]*:[\\\"\\s]*\\\"([^\\\"]+)\\"/);" +
+                        "if(m)csrf=m[1];}" +
+                        "if(!csrf)return;" +
+                        "var x=new XMLHttpRequest();" +
+                        "x.open('POST','/proc/viewer',true);" +
+                        "x.setRequestHeader('Content-Type','application/x-www-form-urlencoded');" +
+                        "x.onload=function(){" +
+                        "try{" +
+                        "var r=JSON.parse(x.responseText);" +
+                        "if(r.status!==200){" +
                         "var btn=document.getElementById('btn_episode_vote');" +
-                        "if(btn&&btn.src&&btn.src.indexOf('recommend_off')>=0){" +
-                        "var el=btn.closest('.menu-bottom-item')||btn.parentElement;" +
-                        "if(el)el.click();}" +
-                        "},500);" +
+                        "if(btn){(btn.closest('.menu-bottom-item')||btn.parentElement).click();}" +
+                        "}}catch(e){}};" +
+                        "x.send('mode=get_viewer_vote&content_no='+no+'&csrf='+csrf);" +
                         "})();", null);
                 }
             }
