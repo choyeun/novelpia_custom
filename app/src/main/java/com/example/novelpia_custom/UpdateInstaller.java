@@ -18,6 +18,8 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import moe.shizuku.api.Shizuku;
+
 /**
  * APK 다운로드 + 설치 + 알림
  * - downloadApk: 백그라운드 다운로드 전용
@@ -204,6 +206,49 @@ public class UpdateInstaller {
 
         NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm != null) nm.notify(NOTIFY_READY, builder.build());
+    }
+
+    // ─── Shizuku 설치 ─────────────────────────────────────
+
+    /** Shizuku 활성화 + 권한 있으면 자동 설치, 없으면 false 반환 */
+    public static boolean installWithShizuku(Context context) {
+        File apkFile = getDownloadedApkFile(context);
+        if (apkFile == null) return false;
+        return installApkWithShizuku(apkFile);
+    }
+
+    /** Shizuku로 pm install 실행 (사용자 확인 없음) */
+    private static boolean installApkWithShizuku(File apkFile) {
+        try {
+            if (!Shizuku.pingBinder() || Shizuku.getVersion() < 11) return false;
+            if (!Shizuku.isGranted()) return false;
+
+            String apkPath = apkFile.getAbsolutePath();
+            Process process = Shizuku.newProcess(
+                    new String[]{"pm", "install", "-r", apkPath},
+                    null, null
+            );
+            int exitCode = process.waitFor();
+            if (exitCode == 0) {
+                Log.i(TAG, "Shizuku 설치 성공: " + apkPath);
+                return true;
+            } else {
+                Log.w(TAG, "Shizuku 설치 실패 (exit=" + exitCode + "): " + apkPath);
+                return false;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Shizuku 설치 예외: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /** Shizuku 활성화 + 권한 보유 여부 */
+    public static boolean isShizukuReady() {
+        try {
+            return Shizuku.pingBinder() && Shizuku.getVersion() >= 11 && Shizuku.isGranted();
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     // ─── 레거시 (다운로드 + 즉시 설치) ─────────────────

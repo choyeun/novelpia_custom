@@ -39,6 +39,8 @@ import java.io.File;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import moe.shizuku.api.Shizuku;
+
 public class MainActivity extends AppCompatActivity {
     // 웹뷰
     private WebView wvViewer;
@@ -87,6 +89,13 @@ public class MainActivity extends AppCompatActivity {
     // 업데이트 설치 알림 주기 토스트
     private final Handler updateReminderHandler = new Handler(Looper.getMainLooper());
     private boolean updateReminderActive = false;
+    // Shizuku 권한 리스너
+    private final Shizuku.OnRequestPermissionResultListener shizukuPermissionListener =
+            (requestCode, grantResult) -> {
+                if (grantResult == Shizuku.OnRequestPermissionResultListener.GRANTED) {
+                    Log.d("Shizuku", "권한 획득 — 다음 업데이트 자동 설치 가능");
+                }
+            };
     // 메인코드 =====================================================================================
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -99,6 +108,8 @@ public class MainActivity extends AppCompatActivity {
 
         // 알림 채널 생성 (업데이트 다운로드 완료 알림용)
         UpdateInstaller.createNotificationChannel(this);
+        // Shizuku 초기화
+        initShizuku();
 
         setContentView(R.layout.activity_main);
 
@@ -217,8 +228,34 @@ public class MainActivity extends AppCompatActivity {
         checkForUpdate();
     }
 
+    // ─── Shizuku 초기화 ───────────────────────────────────
+    /** Shizuku 바인딩 체크 → 권한 없으면 요청 */
+    private void initShizuku() {
+        try {
+            Shizuku.addRequestPermissionResultListener(shizukuPermissionListener);
+            if (Shizuku.pingBinder() && !Shizuku.isGranted()) {
+                Shizuku.requestPermission(10001);
+                Log.d("Shizuku", "권한 요청 중...");
+            } else if (Shizuku.pingBinder()) {
+                Log.d("Shizuku", "권한 있음 — 자동 설치 가능");
+            } else {
+                Log.d("Shizuku", "Shizuku 미실행 — 알림 방식 사용");
+            }
+        } catch (Exception e) {
+            Log.w("Shizuku", "초기화 실패 (Shizuku 미설치): " + e.getMessage());
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        try {
+            Shizuku.removeRequestPermissionResultListener(shizukuPermissionListener);
+        } catch (Exception ignored) {}
+    }
+
     // ─── 자동 업데이트 ────────────────────────────────────
-    /** 백그라운드 스레드에서 GitHub 최신 버전 확인 → 자동 다운로드 + 알림 */
+    /** 백그라운드 스레드에서 GitHub 최신 버전 확인 → Shizuku 자동 설치 or 알림 */
     private void checkForUpdate() {
         new Thread(() -> {
             final UpdateChecker.UpdateInfo info = UpdateChecker.check(BuildConfig.VERSION_NAME);
@@ -233,9 +270,18 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void onComplete(boolean success, String message) {
                                 if (success) {
-                                    UpdateInstaller.showUpdateNotification(
-                                            MainActivity.this, info.latestVersion);
-                                    runOnUiThread(() -> startUpdateReminder());
+                                    // Shizuku 사용 가능 → 자동 설치
+                                    if (UpdateInstaller.installWithShizuku(MainActivity.this)) {
+                                        runOnUiThread(() -> {
+                                            handleToast("✅ 업데이트 자동 설치 완료 (v" + info.latestVersion + ")");
+                                            UpdateInstaller.deleteDownloadedApk(MainActivity.this);
+                                        });
+                                    } else {
+                                        // Shizuku 불가 → 알림 방식
+                                        UpdateInstaller.showUpdateNotification(
+                                                MainActivity.this, info.latestVersion);
+                                        runOnUiThread(() -> startUpdateReminder());
+                                    }
                                 }
                             }
                         });
