@@ -477,14 +477,19 @@ public class MainActivity extends AppCompatActivity {
                     "var f=document.querySelector('footer');" +
                     "if(f){f.style.display='none';}" +
                     "})();", null);
-                // 뷰어 페이지면 자동 추천 (최초 1회)
+                // 뷰어 페이지면 자동 추천 (토글 방지)
+                // Vue 마운트 후 img src가 recommend_off(미추천)일 때만 클릭
                 if (url != null && url.contains("/viewer/")) {
                     view.evaluateJavascript(
                         "(function(){" +
                         "if(window.__voteDone)return;" +
                         "window.__voteDone=true;" +
+                        "setTimeout(function(){" +
                         "var btn=document.getElementById('btn_episode_vote');" +
-                        "if(btn){btn.click();}" +
+                        "if(btn&&btn.src&&btn.src.indexOf('recommend_off')>=0){" +
+                        "var el=btn.closest('.menu-bottom-item')||btn.parentElement;" +
+                        "if(el)el.click();}" +
+                        "},500);" +
                         "})();", null);
                 }
             }
