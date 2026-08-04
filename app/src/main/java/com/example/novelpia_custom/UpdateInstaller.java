@@ -224,17 +224,39 @@ public class UpdateInstaller {
             if (!Shizuku.pingBinder() || Shizuku.getVersion() < 11) return false;
             if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) return false;
 
-            String apkPath = apkFile.getAbsolutePath();
-            Process process = Shizuku.newProcess(
-                    new String[]{"pm", "install", "-r", apkPath},
+            // Shizuku 서버는 ADB 셸 권한 → 앱 캐시 디렉토리(/data/user/0/...) 읽기 불가.
+            // /data/local/tmp/ 로 복사한 뒤 설치해야 한다.
+            String tmpName = "novelpia-update-" + System.currentTimeMillis() + ".apk";
+            String tmpPath = "/data/local/tmp/" + tmpName;
+
+            // 1. APK를 공용 임시 경로로 복사
+            Process cp = Shizuku.newProcess(
+                    new String[]{"cp", apkFile.getAbsolutePath(), tmpPath},
                     null, null
             );
-            int exitCode = process.waitFor();
+            if (cp.waitFor() != 0) {
+                Log.e(TAG, "Shizuku tmp 복사 실패");
+                return false;
+            }
+
+            // 2. 복사된 APK 설치
+            Process install = Shizuku.newProcess(
+                    new String[]{"pm", "install", "-r", tmpPath},
+                    null, null
+            );
+            int exitCode = install.waitFor();
+
+            // 3. 임시 파일 정리
+            try {
+                Process rm = Shizuku.newProcess(new String[]{"rm", "-f", tmpPath}, null, null);
+                rm.waitFor();
+            } catch (Exception ignored) {}
+
             if (exitCode == 0) {
-                Log.i(TAG, "Shizuku 설치 성공: " + apkPath);
+                Log.i(TAG, "Shizuku 설치 성공: " + tmpPath);
                 return true;
             } else {
-                Log.w(TAG, "Shizuku 설치 실패 (exit=" + exitCode + "): " + apkPath);
+                Log.w(TAG, "Shizuku 설치 실패 (exit=" + exitCode + "): " + tmpPath);
                 return false;
             }
         } catch (Exception e) {
