@@ -259,7 +259,7 @@ public class UpdateInstaller {
                 Log.w(TAG, "Shizuku 설치 실패 (exit=" + exitCode + "): " + tmpPath);
                 return false;
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             Log.e(TAG, "Shizuku 설치 예외: " + e.getMessage());
             return false;
         }
@@ -270,7 +270,7 @@ public class UpdateInstaller {
         try {
             return Shizuku.pingBinder() && Shizuku.getVersion() >= 11
                     && Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return false;
         }
     }

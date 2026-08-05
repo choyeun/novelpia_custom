@@ -90,13 +90,6 @@ public class MainActivity extends AppCompatActivity {
     // 업데이트 설치 알림 주기 토스트
     private final Handler updateReminderHandler = new Handler(Looper.getMainLooper());
     private boolean updateReminderActive = false;
-    // Shizuku 권한 리스너
-    private final Shizuku.OnRequestPermissionResultListener shizukuPermissionListener =
-            (requestCode, grantResult) -> {
-                if (grantResult == PackageManager.PERMISSION_GRANTED) {
-                    Log.d("Shizuku", "권한 획득 — 다음 업데이트 자동 설치 가능");
-                }
-            };
     // 메인코드 =====================================================================================
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -230,10 +223,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ─── Shizuku 초기화 ───────────────────────────────────
-    /** Shizuku 바인딩 체크 → 권한 없으면 요청 */
+    /** Shizuku 바인딩 체크 → 권한 없으면 요청 (실패해도 앱 중단 안 됨) */
     private void initShizuku() {
         try {
-            Shizuku.addRequestPermissionResultListener(shizukuPermissionListener);
+            Shizuku.OnRequestPermissionResultListener listener = (code, result) -> {
+                if (result == PackageManager.PERMISSION_GRANTED) {
+                    Log.d("Shizuku", "권한 획득 — 다음 업데이트 자동 설치 가능");
+                }
+            };
+            Shizuku.addRequestPermissionResultListener(listener);
             if (Shizuku.pingBinder() && Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
                 Shizuku.requestPermission(10001);
                 Log.d("Shizuku", "권한 요청 중...");
@@ -242,17 +240,14 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 Log.d("Shizuku", "Shizuku 미실행 — 알림 방식 사용");
             }
-        } catch (Exception e) {
-            Log.w("Shizuku", "초기화 실패 (Shizuku 미설치): " + e.getMessage());
+        } catch (Throwable t) {
+            Log.w("Shizuku", "초기화 불가 (Shizuku 미설치?): " + t.getMessage());
         }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        try {
-            Shizuku.removeRequestPermissionResultListener(shizukuPermissionListener);
-        } catch (Exception ignored) {}
     }
 
     // ─── 자동 업데이트 ────────────────────────────────────
