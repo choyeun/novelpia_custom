@@ -534,7 +534,7 @@ public class MainActivity extends AppCompatActivity {
                         "if(!no)return;" +
                         "var csrf=(document.querySelector('meta[name=csrf-token]')||{}).content;" +
                         "if(!csrf){" +
-                        "var m=document.body.innerHTML.match(/csrf[\\\"\\s]*:[\\\"\\s]*\\\"([^\\\"]+)\\\"/);" +
+                        "var m=document.body.innerHTML.match(/csrf['\\s]*:['\\s]*['\"]([^'\"]+)['\"]/);" +
                         "if(m)csrf=m[1];}" +
                         "if(!csrf)return;" +
                         "var x=new XMLHttpRequest();" +
