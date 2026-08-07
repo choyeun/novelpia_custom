@@ -544,6 +544,8 @@ public class MainActivity extends AppCompatActivity {
                         "}}catch(e){}};" +
                         "x.send('mode=get_viewer_vote&content_no='+no+'&csrf='+csrf);" +
                         "})();", null);
+                    // 추천수 0인 이모티콘 댓글 필터링
+                    DataCollector.filterZeroVoteEmoticonComments(view);
                 }
             }
         });

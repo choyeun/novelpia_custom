@@ -120,4 +120,61 @@ public class DataCollector {
             "np(p+1)};x.send()})(2)})();";
         wv.evaluateJavascript(js, null);
     }
+
+    /**
+     * Filter emoticon-only comments with 0 votes (viewer comment section).
+     * Installs a MutationObserver on the comment area (#comment_load) to catch
+     * dynamically-loaded comments, then hides those that contain ONLY emoticon
+     * images (no text) AND have zero vote count.
+     */
+    public static void filterZeroVoteEmoticonComments(WebView wv) {
+        String js =
+            "(function(){" +
+            "if(window.__commentFilterDone)return;" +
+            "window.__commentFilterDone=true;" +
+            "function filterComment(comment){" +
+            "  if(comment.__filtered)return;" +
+            "  comment.__filtered=true;" +
+            "  " +
+            "  // vote count - try multiple selectors" +
+            "  var voteEl = comment.querySelector('.c_vote_num, .comment_vote_num, .vote_num, .c_vote, [class*=vote]');" +
+            "  var voteText = voteEl ? voteEl.textContent.trim() : '';" +
+            "  var vote = parseInt(voteText.replace(/[^0-9]/g,'')) || 0;" +
+            "  if(vote > 0) return;" +
+            "  " +
+            "  // comment body - try multiple selectors" +
+            "  var body = comment.querySelector('.comment_body, .c_body, .comment_cont, .comment_text, [class*=body], [class*=cont]');" +
+            "  if(!body) return;" +
+            "  " +
+            "  // emoticon-only: no text, only imgs" +
+            "  var text = body.textContent.trim();" +
+            "  if(text.length > 0) return;" +
+            "  " +
+            "  var imgs = body.querySelectorAll('img');" +
+            "  if(imgs.length === 0) return;" +
+            "  " +
+            "  // hide it" +
+            "  comment.style.display = 'none';" +
+            "}" +
+            "function scanComments(){" +
+            "  var container = document.getElementById('comment_load');" +
+            "  if(!container){" +
+            "    container = document.querySelector('.comment_list, .comment_area, .comment-box, [class*=comment]');" +
+            "  }" +
+            "  if(!container) return;" +
+            "  " +
+            "  var comments = container.querySelectorAll('.comment_box, .comment-item, .commentItem, .comment, [class*=comment_]:not(#comment_load)');" +
+            "  comments.forEach(filterComment);" +
+            "}" +
+            "// 1) scan already-loaded comments" +
+            "scanComments();" +
+            "// 2) MutationObserver for dynamic loading" +
+            "var target = document.getElementById('comment_load') || document.querySelector('.comment_list, .comment_area, [class*=comment]');" +
+            "if(target){" +
+            "  var obs = new MutationObserver(function(){scanComments();});" +
+            "  obs.observe(target, {childList:true, subtree:true});" +
+            "}" +
+            "})();";
+        wv.evaluateJavascript(js, null);
+    }
 }
