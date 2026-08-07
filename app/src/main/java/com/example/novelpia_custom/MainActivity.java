@@ -364,7 +364,7 @@ public class MainActivity extends AppCompatActivity {
     };
 
     private void showSettingsDialog() {
-        String[] items = {"🔄 현재 페이지 새로고침", "🗑️ 캐시 초기화", "📲 업데이트 확인", "ℹ️ 앱 정보"};
+        String[] items = {"🔄 현재 페이지 새로고침", "🗑️ 캐시 초기화", "📲 업데이트 확인", "📜 최근 패치 내역", "ℹ️ 앱 정보"};
         new MaterialAlertDialogBuilder(this)
                 .setTitle("⚙️ 설정")
                 .setItems(items, (DialogInterface dialog, int which) -> {
@@ -377,11 +377,55 @@ public class MainActivity extends AppCompatActivity {
                     } else if (which == 2) {
                         checkForUpdateFromSettings();
                     } else if (which == 3) {
+                        showChangelogDialog();
+                    } else if (which == 4) {
                         showAboutDialog();
                     }
                 })
                 .setNegativeButton("닫기", null)
                 .show();
+    }
+
+    private void showChangelogDialog() {
+        handleToast("📜 최근 패치 내역 불러오는 중...");
+        new Thread(() -> {
+            final UpdateChecker.ReleaseInfo[] releases = UpdateChecker.fetchRecentChanges(5);
+            runOnUiThread(() -> {
+                if (releases.length == 0) {
+                    new MaterialAlertDialogBuilder(this)
+                            .setTitle("📜 최근 패치 내역")
+                            .setMessage("패치 내역을 불러올 수 없습니다.\n네트워크 상태를 확인하고 다시 시도해주세요.")
+                            .setPositiveButton("닫기", null)
+                            .show();
+                    return;
+                }
+
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < releases.length; i++) {
+                    UpdateChecker.ReleaseInfo r = releases[i];
+                    sb.append("═══ v").append(r.version).append(" ═══\n\n");
+                    if (r.body != null && !r.body.isEmpty()) {
+                        // 첫 500자만 (본문이 너무 길면)
+                        String body = r.body.trim();
+                        if (body.length() > 500) {
+                            body = body.substring(0, 500) + "\n\n...";
+                        }
+                        sb.append(body);
+                    } else {
+                        sb.append("(변경사항 없음)");
+                    }
+                    if (i < releases.length - 1) {
+                        sb.append("\n\n");
+                    }
+                }
+
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle("📜 최근 패치 내역")
+                        .setMessage(sb.toString())
+                        .setPositiveButton("닫기", null)
+                        .show();
+            });
+        }).start();
     }
 
     private void showAboutDialog() {
@@ -394,7 +438,7 @@ public class MainActivity extends AppCompatActivity {
                 + "• 읽은 기록 자동 수집\n"
                 + "• 자동 업데이트\n"
                 + "• 이미지 캐싱 (데이터 절약)\n"
-                + "• 로그인 쿠키 자동 수집\\n"
+                + "• 로그인 쿠키 자동 수집\n"
                 + "• 볼륨키 페이지 이동";
         new MaterialAlertDialogBuilder(this)
                 .setTitle("ℹ️ 정보")

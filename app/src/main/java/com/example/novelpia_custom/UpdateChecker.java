@@ -19,6 +19,8 @@ public class UpdateChecker {
     private static final String TAG = "UpdateChecker";
     private static final String GITHUB_API =
             "https://api.github.com/repos/choyeun/novelpia_custom/releases/latest";
+    private static final String GITHUB_RELEASES_API =
+            "https://api.github.com/repos/choyeun/novelpia_custom/releases";
 
     public static class UpdateInfo {
         /** 새 버전이 있는지 */
@@ -44,6 +46,19 @@ public class UpdateChecker {
         /** 업데이트 없음 / 오류 발생 시 사용 */
         public static UpdateInfo none() {
             return new UpdateInfo(false, null, null, 0, null);
+        }
+    }
+
+    /** 릴리스 1건 정보 */
+    public static class ReleaseInfo {
+        public final String tagName;
+        public final String version;
+        public final String body;
+
+        public ReleaseInfo(String tagName, String version, String body) {
+            this.tagName = tagName;
+            this.version = version;
+            this.body = body;
         }
     }
 
@@ -150,6 +165,53 @@ public class UpdateChecker {
             return result;
         } catch (Exception e) {
             return new int[0];
+        }
+    }
+
+    /**
+     * GitHub Releases 목록 조회 (최근 N개)
+     * @param count 가져올 릴리스 개수 (최대 10)
+     * @return ReleaseInfo 배열 (오류 시 빈 배열)
+     */
+    public static ReleaseInfo[] fetchRecentChanges(int count) {
+        try {
+            if (count < 1) count = 1;
+            if (count > 10) count = 10;
+
+            HttpURLConnection conn = (HttpURLConnection) new URL(
+                    GITHUB_RELEASES_API + "?per_page=" + count).openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Accept", "application/vnd.github.v3+json");
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
+
+            int code = conn.getResponseCode();
+            if (code != 200) {
+                Log.w(TAG, "Releases API 응답 " + code);
+                return new ReleaseInfo[0];
+            }
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) sb.append(line);
+            br.close();
+            conn.disconnect();
+
+            JSONArray arr = new JSONArray(sb.toString());
+            ReleaseInfo[] result = new ReleaseInfo[arr.length()];
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject json = arr.getJSONObject(i);
+                String tagName = json.optString("tag_name", "");
+                String version = tagName.startsWith("v") ? tagName.substring(1) : tagName;
+                String body = json.optString("body", "");
+                result[i] = new ReleaseInfo(tagName, version, body);
+            }
+            return result;
+
+        } catch (Exception e) {
+            Log.e(TAG, "릴리스 목록 조회 실패: " + e.getMessage());
+            return new ReleaseInfo[0];
         }
     }
 }
