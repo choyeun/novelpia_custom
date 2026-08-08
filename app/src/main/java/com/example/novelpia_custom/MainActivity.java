@@ -582,7 +582,7 @@ public class MainActivity extends AppCompatActivity {
                         "x.onload=function(){" +
                         "try{" +
                         "var r=JSON.parse(x.responseText);" +
-                        "if(r.status!==200){" +
+                        "if(r.result===\"NO\"){" +
                         "var btn=document.getElementById('btn_episode_vote');" +
                         "if(btn){(btn.closest('.menu-bottom-item')||btn.parentElement).click();}" +
                         "}}catch(e){}};" +
