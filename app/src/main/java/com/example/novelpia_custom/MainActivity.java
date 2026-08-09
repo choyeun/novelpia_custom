@@ -387,68 +387,69 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showChangelogDialog() {
-            handleToast("📜 최근 패치 내역 불러오는 중...");
-            new Thread(() -> {
-                final UpdateChecker.ReleaseInfo[] releases = UpdateChecker.fetchRecentChanges(5);
-                runOnUiThread(() -> {
-                    if (releases.length == 0) {
-                        new MaterialAlertDialogBuilder(this)
-                                .setTitle("📜 최근 패치 내역")
-                                .setMessage("패치 내역을 불러올 수 없습니다.\\n네트워크 상태를 확인하고 다시 시도해주세요.")
-                                .setPositiveButton("닫기", null)
-                                .show();
-                        return;
-                    }
-
-                    StringBuilder sb = new StringBuilder();
-                    for (int i = 0; i < releases.length; i++) {
-                        UpdateChecker.ReleaseInfo r = releases[i];
-                        sb.append("<h2>v").append(escapeHtml(r.version)).append("</h2>");
-                        if (r.body != null && !r.body.isEmpty()) {
-                            String body = r.body.trim();
-                            if (body.length() > 500) {
-                                body = body.substring(0, 500) + "\\n\\n...";
-                            }
-                            sb.append(markdownToHtml(body));
-                        } else {
-                            sb.append("<p>(변경사항 없음)</p>");
-                        }
-                    }
-
-                    WebView wv = new WebView(this);
-                    wv.setWebViewClient(new WebViewClient());
-                    wv.getSettings().setJavaScriptEnabled(false);
-                    wv.setBackgroundColor(Color.parseColor("#2d2d2d"));
-                    String html = "<html><head><meta charset=\"utf-8\">" +
-                            + "<style>"
-                            + "body{color:#ddd;background:#2d2d2d;font-size:13px;line-height:1.6;padding:8px 12px;font-family:sans-serif;}"
-                            + "h2{color:#fff;font-size:16px;border-bottom:1px solid #555;padding-bottom:4px;margin:12px 0 6px;}"
-                            + "h3{color:#bbb;font-size:14px;margin:8px 0 4px;}"
-                            + "b{color:#fff;}"
-                            + "pre{background:#1e1e1e;color:#ccc;padding:8px;border-radius:4px;overflow-x:auto;font-size:12px;}"
-                            + "code{background:#1e1e1e;color:#e6a;padding:1px 4px;border-radius:3px;font-size:12px;}"
-                            + "a{color:#66b3ff;}"
-                            + "ul{padding-left:20px;margin:4px 0;}"
-                            + "li{margin:2px 0;}"
-                            + "p{margin:4px 0;}"
-                            + "</style></head><body>" + sb + "</body></html>";
-                    wv.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
-
-                    new AlertDialog.Builder(this)
+        handleToast("📜 최근 패치 내역 불러오는 중...");
+        new Thread(() -> {
+            final UpdateChecker.ReleaseInfo[] releases = UpdateChecker.fetchRecentChanges(5);
+            runOnUiThread(() -> {
+                if (releases.length == 0) {
+                    new MaterialAlertDialogBuilder(this)
                             .setTitle("📜 최근 패치 내역")
-                            .setView(wv)
+                            .setMessage("패치 내역을 불러올 수 없습니다.\n네트워크 상태를 확인하고 다시 시도해주세요.")
                             .setPositiveButton("닫기", null)
                             .show();
-                });
-            }).start();
-        }
+                    return;
+                }
 
-        /** 마크다운 → HTML 변환 (기본적인 요소만) */
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < releases.length; i++) {
+                    UpdateChecker.ReleaseInfo r = releases[i];
+                    sb.append("<h2>v").append(escapeHtml(r.version)).append("</h2>");
+                    if (r.body != null && !r.body.isEmpty()) {
+                        String body = r.body.trim();
+                        if (body.length() > 500) {
+                            body = body.substring(0, 500) + "\n\n...";
+                        }
+                        sb.append(markdownToHtml(body));
+                    } else {
+                        sb.append("<p>(변경사항 없음)</p>");
+                    }
+                }
+
+                WebView wv = new WebView(this);
+                wv.setWebViewClient(new WebViewClient());
+                wv.getSettings().setJavaScriptEnabled(false);
+                wv.setBackgroundColor(Color.parseColor("#2d2d2d"));
+                String html = "<html><head><meta charset=\"utf-8\">"
+                        + "<style>"
+                        + "body{color:#ddd;background:#2d2d2d;font-size:13px;line-height:1.6;padding:8px 12px;font-family:sans-serif;}"
+                        + "h2{color:#fff;font-size:16px;border-bottom:1px solid #555;padding-bottom:4px;margin:12px 0 6px;}"
+                        + "h3{color:#bbb;font-size:14px;margin:8px 0 4px;}"
+                        + "b{color:#fff;}"
+                        + "pre{background:#1e1e1e;color:#ccc;padding:8px;border-radius:4px;overflow-x:auto;font-size:12px;}"
+                        + "code{background:#1e1e1e;color:#e6a;padding:1px 4px;border-radius:3px;font-size:12px;}"
+                        + "a{color:#66b3ff;}"
+                        + "ul{padding-left:20px;margin:4px 0;}"
+                        + "li{margin:2px 0;}"
+                        + "p{margin:4px 0;}"
+                        + "</style></head><body>" + sb + "</body></html>";
+                wv.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
+
+                new AlertDialog.Builder(this)
+                        .setTitle("📜 최근 패치 내역")
+                        .setView(wv)
+                        .setPositiveButton("닫기", null)
+                        .show();
+            });
+        }).start();
+    }
+
+    private String escapeHtml(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
     private String markdownToHtml(String md) {
-        String h = md
-                .replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;");
+        String h = escapeHtml(md);
         // 헤더
         h = h.replaceAll("(?m)^### (.+)$", "<h3>$1</h3>");
         h = h.replaceAll("(?m)^## (.+)$", "<h2>$1</h2>");
@@ -466,6 +467,214 @@ public class MainActivity extends AppCompatActivity {
         h = h.replaceAll("\\n\\n", "</p><p>");
         h = h.replaceAll("\\n", "<br>");
         return "<p>" + h + "</p>";
+    }
+
+    private void showAboutDialog() {
+        String msg = "📚 노벨피아 커스텀\n\n"
+                + "버전: " + BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")\n"
+                + "\n"
+                + "GitHub: github.com/choyeun/novelpia_custom\n"
+                + "\n"
+                + "기능:\n"
+                + "• 읽은 기록 자동 수집\n"
+                + "• 자동 업데이트\n"
+                + "• 이미지 캐싱 (데이터 절약)\n"
+                + "• 로그인 쿠키 자동 수집\n"
+                + "• 볼륨키 페이지 이동";
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("ℹ️ 정보")
+                .setMessage(msg)
+                .setPositiveButton("닫기", null)
+                .show();
+    }
+
+    // 웹뷰 초기화
+    @SuppressLint("SetJavaScriptEnabled")
+    private void setupWebView(WebView wv) {
+        WebSettings s = wv.getSettings();
+        s.setJavaScriptEnabled(true);
+        s.setDomStorageEnabled(true);
+        s.setDatabaseEnabled(true);
+        s.setCacheMode(WebSettings.LOAD_DEFAULT);
+        // 구글 로그인 문제 수정
+        if (wvUserAgent == null) {
+            wvUserAgent = s.getUserAgentString().replace("; wv", "");
+        }
+        s.setUserAgentString(wvUserAgent);
+        // NativeBridge 등록 (오프라인 큐 + 작품 정보 수집)
+        wv.addJavascriptInterface(new NativeBridge(this), "Android");
+        // 링크 이동 블락
+        wv.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                // NOTE: 노벨피아는 로그인 요구를 파라미터로 넘기는데, 아래와 같은 로직을 사용하면
+                //       로그인 요구 창이 열래는 대신 단순히 메인 창으로 돌아감
+                // NOTE: 파라미터 분리 로직을 '?sid='로 명시하면 해결되지만 어차피 큰 차이는 없어서 냅둠
+                String url = cutUrl(request.getUrl().toString());
+                byte target = classify(url);
+                Log.d("stack", backoffstack.size() + "**" + toRead(current) + "->" + toRead(target));
+                // 뷰어 웹뷰로 이동하는 경우
+                if (target == VIEWER_INDEX) setLastUrl(url);
+                // 동일 웹뷰 내에서 이동한 경우
+                if (target == current) {
+                    String current_url = view.getUrl();
+                    if (target != VIEWER_INDEX && current_url != null && !url.equals(cutUrl(current_url))) {
+                        backoffstack.push(current);
+                    }
+                    return false;
+                }
+
+                handleUrl(url);
+                return true;
+            }
+
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                String reqUrl = request.getUrl().toString();
+                String ext = CachingWebViewClient.getExtension(reqUrl).toLowerCase();
+
+                // 이미지/폰트만 캐싱
+                if (!CachingWebViewClient.isCacheableExtension(ext)) {
+                    return null;
+                }
+
+                // 캐시 hit
+                DiskCache.CacheEntry cached = diskCache.get(reqUrl);
+                if (cached != null) {
+                    Log.d("WebViewCache", "✅ 캐시 hit: " + CachingWebViewClient.truncateUrl(reqUrl, 60));
+                    return new WebResourceResponse(
+                            cached.contentType,
+                            "",  // HttpURLConnection이 이미 압축 해제
+                            new java.io.ByteArrayInputStream(cached.data)
+                    );
+                }
+
+                // 캐시 miss → 직접 받아서 저장
+                Log.d("WebViewCache", "⬇ 캐시 miss: " + CachingWebViewClient.truncateUrl(reqUrl, 60));
+                try {
+                    java.net.HttpURLConnection conn =
+                            (java.net.HttpURLConnection) new java.net.URL(reqUrl).openConnection();
+                    conn.setRequestMethod("GET");
+                    conn.setConnectTimeout(8000);
+                    conn.setReadTimeout(15000);
+                    conn.setInstanceFollowRedirects(true);
+
+                    if (conn.getResponseCode() != 200) {
+                        conn.disconnect();
+                        return null;
+                    }
+
+                    String contentType = conn.getContentType();
+                    if (contentType == null) contentType = CachingWebViewClient.mimeFromExtension(ext);
+
+                    byte[] data = CachingWebViewClient.readAllBytes(conn.getInputStream());
+                    conn.disconnect();
+
+                    diskCache.put(reqUrl, data, contentType, "");
+                    return new WebResourceResponse(contentType, "", new java.io.ByteArrayInputStream(data));
+
+                } catch (Exception e) {
+                    Log.w("WebViewCache", "캐시 miss 처리 실패: " + e.getMessage());
+                    return null;
+                }
+            }
+
+            @Override
+            public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+                super.onPageStarted(view, url, favicon);
+                loadingBar.setVisibility(View.VISIBLE);
+                handleToast("📖 로딩 중...");
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                loadingBar.setVisibility(View.GONE);
+                // 모든 WebView에서 localStorage 데이터 수집
+                DataCollector.collect(view);
+                // mybook 페이지면 HTML에서 novel_no 전체 추출
+                if (url != null && url.contains("/mybook")) {
+                    DataCollector.collectMybookNovels(view);
+                }
+                // 노벨피아 하단바 숨기기 (앱 내비와 중복)
+                view.evaluateJavascript(
+                    "(function(){" +
+                    "var e=document.querySelector('.bt-nv-wrapper');" +
+                    "if(e){e.style.display='none';}" +
+                    "var f=document.querySelector('footer');" +
+                    "if(f){f.style.display='none';}" +
+                    "})();", null);
+                // 뷰어 페이지면 자동 추천 (서버 API로 상태 확인 후 클릭)
+                if (url != null && url.contains("/viewer/")) {
+                    view.evaluateJavascript(
+                        "(function(){" +
+                        "if(window.__voteDone)return;" +
+                        "window.__voteDone=true;" +
+                        "var no=window.location.pathname.split('/').pop();" +
+                        "if(!no)return;" +
+                        "var csrf=(document.querySelector('meta[name=csrf-token]')||{}).content;" +
+                        "if(!csrf){" +
+                        "var m=document.body.innerHTML.match(/csrf['\\s]*:['\\s]*['\"]([^'\"]+)['\"]/);" +
+                        "if(m)csrf=m[1];}" +
+                        "if(!csrf)return;" +
+                        "var x=new XMLHttpRequest();" +
+                        "x.open('POST','/proc/viewer',true);" +
+                        "x.setRequestHeader('Content-Type','application/x-www-form-urlencoded');" +
+                        "x.onload=function(){" +
+                        "try{" +
+                        "var r=JSON.parse(x.responseText);" +
+                        "if(r.result===\"NO\"){" +
+                        "var btn=document.getElementById('btn_episode_vote');" +
+                        "if(btn){(btn.closest('.menu-bottom-item')||btn.parentElement).click();}" +
+                        "}}catch(e){}};" +
+                        "x.send('mode=get_viewer_vote&content_no='+no+'&csrf='+csrf);" +
+                        "})();", null);
+                    // 추천수 0인 이모티콘 댓글 필터링
+                    DataCollector.filterZeroVoteEmoticonComments(view);
+                }
+            }
+        });
+        // 얼럿창 처리
+        wv.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onJsAlert(WebView view, String url, String message, JsResult result) {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("알림")
+                        .setMessage(message)
+                        .setPositiveButton("OK", (dialog, which) -> result.confirm())
+                        .setOnCancelListener(dialog -> result.cancel())
+                        .show();
+                return true;
+            }
+            @Override
+            public boolean onJsConfirm(WebView view, String url, String message, JsResult result) {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("확인")
+                        .setMessage(message)
+                        .setPositiveButton("OK", (dialog, which) -> result.confirm())
+                        .setNegativeButton("Cancel", (dialog, which) -> result.cancel())
+                        .setOnCancelListener(dialog -> result.cancel())
+                        .show();
+                return true;
+            }
+        });
+    }
+    // 라우팅 로직 ==================================================================================
+    private void swapView(byte index, boolean isbackoff) { //0b0000
+        Log.d("stack", "open: "+toRead(index));
+        wvMain.setVisibility(View.GONE);
+        wvSearch.setVisibility(View.GONE);
+        wvViewer.setVisibility(View.GONE);
+        wvBook.setVisibility(View.GONE);
+        wvNovel.setVisibility(View.GONE);
+        // viewer 웹뷰에서 바로가기 버튼 숨기기
+        if(index != VIEWER_INDEX) btnGo.setVisibility(View.VISIBLE);
+        else btnGo.setVisibility(View.GONE);
+
+        classify(index).setVisibility(View.VISIBLE);
+        // viewer 웹뷰가 아니거나 되돌리기 작업이 아닌 경우 스택에 삽입
+        if((current != VIEWER_INDEX) && (!isbackoff)) backoffstack.push(current);
+        current = index;
     }
     private void openBook(String url) {
         wvBook.loadUrl(url);
