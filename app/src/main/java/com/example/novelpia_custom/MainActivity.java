@@ -407,6 +407,12 @@ public class MainActivity extends AppCompatActivity {
                     sb.append("<h2>v").append(escapeHtml(r.version)).append("</h2>");
                     if (r.body != null && !r.body.isEmpty()) {
                         String body = r.body.trim();
+                        // body에 이미 "## v..." 헤더가 포함되어 있으면 제거 (중복 방지)
+                        if (body.startsWith("## v")) {
+                            int nl = body.indexOf('\n');
+                            if (nl > 0) body = body.substring(nl).trim();
+                            else body = "";
+                        }
                         if (body.length() > 500) {
                             body = body.substring(0, 500) + "\n\n...";
                         }
